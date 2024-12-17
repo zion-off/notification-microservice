@@ -19,11 +19,11 @@
 
 ## Why Microservices?
 
-In the history of large scale software development, quite a few challenges posed by monolithic systems have contributed to the evolution and wider adoption of microservice architectures. For our purposes, i.e. in relation to a messaging service, the loose coupling of the client and the service makes sense for a number of reasons.
+In the history of large scale software development, quite a few challenges posed by monolithic systems have contributed to the evolution and wider adoption of microservice architectures. For our purposes, i.e. in relation to a messaging client, the loose coupling of the client and the server makes sense owing to a number of reasons.
 
 ### Microservices are technology agnostic[^1]
 
-The message emitter, or the client, in this case, interacts with the service using REST, so the implementation details of the server, beyond the API definition, do not concern the client implementation. The server could have been implemented in a different programming language altogether and would still be able to communicate with the client regardless.
+The message emitter, or the client, in this case, interacts with the service using REST, so the implementation details of the server, beyond the API definition, do not concern the client's implementation. The server could have been implemented in a different programming language altogether and would still be able to communicate with the client regardless, thanks to REST specifications.
 
 ### Microservices facilitate software evolution
 
@@ -31,13 +31,13 @@ With the loose coupling of the client and the server, either of these could be m
 
 ## Fault tolerance implementation
 
-Despite their advantages, microservices, by nature, introduce two or more points of failure. To address this in our system, implement the follow mechanisms.
+Despite their advantages, microservices, by nature, introduce two or more points of failure. To address this in our system, we implement the following mechanisms.
 
 ### Request handling
 
-Incoming requests are stored in a deque, similar to how outgoing segments are handled in network buffers at the transport layer. Although TCP maintains a window which can grow and shrink in response to the number of ACKs received, since we cannot afford to "drop" outgoing requests at the application layer, we implement a simple double ended queue to handle outgoing requests. 
+Incoming requests are stored in a deque, similar to how outgoing segments are handled in network buffers at the transport layer. Although TCP maintains a window that can grow and shrink in response to the number of ACKs received, since we cannot afford to "drop" outgoing requests at the application layer, we implement a simple double ended queue to handle outgoing requests. 
 
-We take the server to be a wrapper around multiple instances of text and email services, and when we make a request, we also keep track of the particular service that was requested. When the server responds with an error, the error message can be inspected to identify the service that caused the failure. Sending a request increments a flag assigned to that service, and receive a 200 response decrements it. If this flag exceeds a value, we can take further action, as discussed below.
+We take the server to be a wrapper around multiple instances of text and email services, and when we make a request, we also keep track of the particular service that was requested. When the server responds with an error, the error message can be inspected to identify the service that caused the failure. Sending a request increments a flag assigned to that service, and receiving a 200 response decrements it. If this flag exceeds a value, we can take further action, as discussed below.
 
 All of this can be housed in a `NetworkHandler` singleton class.
 
