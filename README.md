@@ -46,13 +46,15 @@ clients would not have to be modified. Although, it would be in the client
 developer’s best interest to make use of the extra instances, the principle
 still stands.
 
-## Fault tolerance implementation
+# Fault tolerance implementation
 
 Despite their advantages, microservices, by nature, introduce two or more points
 of failure. To address this in our system, we implement the following
 mechanisms.
 
-### Request handling
+## Request handling
+
+### Candiate 1
 
 Incoming requests are stored in a deque, similar to how outgoing segments are
 handled in network buffers at the transport layer. Although TCP maintains a
@@ -69,6 +71,8 @@ Sending a request increments a flag assigned to that service, and receiving a
 action, as discussed below.
 
 All of this can be housed in a `NetworkHandler` singleton class.
+
+### Candidate 2
 
 Request queuing and processing can also be done with a more robust, dedicated
 third-party library, such as Bee-Queue, which is "a simple, fast, robust
@@ -92,13 +96,24 @@ queue.process(function (job, done) {
   return done(null, job.data.x + job.data.y);
 });
 ```
+
 </details>
 
-At least for small tasks, Bee-Queue performs better than other job queue processing libraries for Node such as Bull, which makes it a great choice for our use case. Other features include simpler job timeout and retry interface, job completion or failure reporting, and concurrent processing. The third feature is particularly useful, since we have access to multiple email and SMS providers, it is reasonable that we request them concurrently.
+At least for small tasks, Bee-Queue performs better than other job queue
+processing libraries for Node such as Bull, which makes it a great choice for
+our use case. Other features include simpler job timeout and retry interface,
+job completion or failure reporting, and concurrent processing. The third
+feature is particularly useful, since we have access to multiple email and SMS
+providers, it is reasonable that we request them concurrently.
 
-We instantiate two separate queues to request the email and SMS providers separately. Requests can be sent out following a load balancing pattern, wherein no two consecutive request are sent to the same provider. To achieve this, we request the three providers in a round robin fashion.
+We instantiate two separate queues to request the email and SMS providers
+separately. Requests can be made to different providers following a weighted
+load balancing pattern, wherein we keep track of the performance of each
+messaging and email provider. Performance of each provider is measured by
+calculating the ratio of the number of 200 and 500 responses received, and
+higher performing providers are requested more regularly.
 
-### Retry after delay
+## Retry after delay
 
 We retry only if a 500 level error is received, which indicates an error at the
 server. When we do get one, we push the same request that caused the error to
