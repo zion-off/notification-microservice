@@ -50,33 +50,26 @@ still stands.
 
 Despite their advantages, microservices, by nature, introduce two or more points
 of failure. To address this in our system, we implement the following
-mechanisms.
+mechanisms. For clarity, imagine a sample request being sent to our server.
+
+## Load balancing
+
+The incoming request is received by a handler function, which picks a provider
+at random and routes the request to the provider if it is healthy. Whether a
+provider is healthy is determined using a `healthy` flag, a boolean
+representation of the provider's health. For each provider, we maintain a fixed
+window to keep track of the last 500 requests sent to that provider. If the
+ratio of success to error responses drop below a certain threshold, the
+`healthy` flag for that provider is toggled to false. This threshold is
+dynamically adjusted based on the server load, and can be made inversely
+proportional to the server load. If the server is receiving too many requests,
+we would want to avoid marking providers as unhealthy too soon.
 
 ## Request handling
 
-### Candiate 1
-
-Incoming requests are stored in a deque, similar to how outgoing segments are
-handled in network buffers at the transport layer. Although TCP maintains a
-window that can grow and shrink in response to the number of ACKs received,
-since we cannot afford to "drop" outgoing requests at the application layer, we
-implement a simple double ended queue to handle outgoing requests.
-
-We take the server to be a wrapper around multiple instances of text and email
-services, and when we make a request, we also keep track of the particular
-service that was requested. When the server responds with an error, the error
-message can be inspected to identify the service that caused the failure.
-Sending a request increments a flag assigned to that service, and receiving a
-200 response decrements it. If this flag exceeds a value, we can take further
-action, as discussed below.
-
-All of this can be housed in a `NetworkHandler` singleton class.
-
-### Candidate 2
-
-Request queuing and processing can also be done with a more robust, dedicated
-third-party library, such as Bee-Queue, which is "a simple, fast, robust
-job/task queue for Node.js, backed by Redis"[^2].
+Request queuing and processing is done with a robust, dedicated third-party
+library, such as Bee-Queue, which is "a simple, fast, robust job/task queue for
+Node.js, backed by Redis"[^2].
 
 <details>
 <summary>Example</summary>
@@ -102,24 +95,19 @@ queue.process(function (job, done) {
 At least for small tasks, Bee-Queue performs better than other job queue
 processing libraries for Node such as Bull, which makes it a great choice for
 our use case. Other features include simpler job timeout and retry interface,
-job completion or failure reporting, and concurrent processing. The third
-feature is particularly useful, since we have access to multiple email and SMS
-providers, it is reasonable that we request them concurrently.
+job completion or failure reporting, and concurrent processing.
 
-We instantiate two separate queues to request the email and SMS providers
-separately. Requests can be made to different providers following a weighted
-load balancing pattern, wherein we keep track of the performance of each
-messaging and email provider. Performance of each provider is measured by
-calculating the ratio of the number of 200 and 500 responses received, and
-higher performing providers are requested more regularly.
+We instantiate a separate queue for each provider. When the handler routes a
+request to a given provider, it essentially enqueues the request to the
+provider's respective queue.
 
 ## Retry after delay
 
 We retry only if a 500 level error is received, which indicates an error at the
-server. When we do get one, we push the same request that caused the error to
-the head of the queue. This ensures a mechanism for deduplication (idempotence).
-Otherwise, retries could cause the same request to be sent more than once, with
-unintended side effects.
+server. When we do get one, we send it back to the handler function, which
+handles the request appropriately. By not retyring after a simple timeout, we
+ensure a mechanism for deduplication (idempotence). Otherwise, retries could
+cause the same request to be sent more than once, with unintended side effects.
 
 > If the fault is caused by one of the more commonplace connectivity or busy
 > failures, the network or service might need a short period while the
@@ -136,17 +124,24 @@ unintended side effects.
 > of failure and the probability that it'll be corrected during this time.[^3]
 
 Since we assume that the server does not fail deterministically, we implement a
-retry mechanism with exponential delays.
+retry mechanism with exponential delays. The error rate of each queue determines
+the delay factor. Having a separate queue for each provider allows us to set the
+delay factor for each provider individually.
+
+## Recovering from unhealthy
 
 Additionally, in a distributed system, faults can occur as a result of
 anticipated events, such as network congestion and timeouts, which are generally
 resolved quickly. However, unanticipated events, such as failure in a particular
 part of the system, could also be causing failures. Cascading timeouts or
 failures could then overwhelm the system. To address this, we adopt the circuit
-breaker pattern[^4]. If one particular service crosses a failure threshold, we
-can safely assume it to be offline, and avoid querying it with further requests.
-How we arrive at this failure threshold is also an important consideration, and
-it should ideally correlate with the system load at a given time.
+breaker pattern[^4].
+
+When a provider is marked unhealthy, we stop sending it requests. However, we
+also maintain two extra queues for the email and SMS providers. At fixed
+intervals, the handler function routes requests to these extra queues. With
+enough successful responses, the provider's health metric can be brought back
+up, and it may be marked healthy for use again.
 
 [^1]:
     [What are the benefits of a microservices architecture?](https://about.gitlab.com/blog/2022/09/29/what-are-the-benefits-of-a-microservices-architecture/)
