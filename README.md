@@ -69,7 +69,7 @@ we would want to avoid marking providers as unhealthy too soon.
 
 Request queuing and processing is done with a robust, dedicated third-party
 library, such as Bee-Queue, which is "a simple, fast, robust job/task queue for
-Node.js, backed by Redis"[^2].
+Node.js"[^2].
 
 <details>
 <summary>Example</summary>
