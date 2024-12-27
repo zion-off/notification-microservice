@@ -58,12 +58,12 @@ The incoming request is received by a handler function, which picks a provider
 at random and routes the request to the provider if it is healthy. Whether a
 provider is healthy is determined using a `healthy` flag, a boolean
 representation of the provider's health. For each provider, we maintain a fixed
-stats to keep track of the last 500 requests sent to that provider. If the
-ratio of success to error responses drop below a certain threshold, the
-`healthy` flag for that provider is toggled to false. This threshold is
-dynamically adjusted based on the server load, and can be made inversely
-proportional to the server load. If the server is receiving too many requests,
-we would want to avoid marking providers as unhealthy too soon.
+stats to keep track of the last 500 requests sent to that provider. If the ratio
+of success to error responses drop below a certain threshold, the `healthy` flag
+for that provider is toggled to false. This threshold is dynamically adjusted
+based on the server load, and can be made inversely proportional to the server
+load. If the server is receiving too many requests, we would want to avoid
+marking providers as unhealthy too soon.
 
 ## Request handling
 
@@ -139,10 +139,10 @@ then overwhelm the system. To address this, we adopt the circuit breaker
 pattern[^4].
 
 When a provider crosses a delay threshold, it is marked unhealthy, and we stop
-sending it requests. However, we also maintain two extra queues for email
-and SMS providers. At fixed intervals, the handler function routes requests to
-these extra queues. With enough successful responses, the provider's health
-metric can be brought back up, and it may be marked healthy for use again.
+sending it requests. However, the handler function will randomly route requests
+to unhealthy providers in order to check its health. With enough successful
+responses, the provider's health metric can be brought back up, and it may be
+marked healthy for use again.
 
 [^1]:
     [What are the benefits of a microservices architecture?](https://about.gitlab.com/blog/2022/09/29/what-are-the-benefits-of-a-microservices-architecture/)
