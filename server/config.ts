@@ -9,7 +9,7 @@ export const options = {
   connection: { host: REDIS_HOST, port: Number(REDIS_PORT) },
 };
 
-// for tracking success/error ratio of last N requests
+// for tracking success/error of last N requests
 export const WINDOW_SIZE = 5;
 
 // 100ms base for exponential backoff
