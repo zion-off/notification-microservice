@@ -1,28 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
-import { Queue, Worker, Job } from "bullmq";
-import { SMSHandlerProps, EmailHandlerProps, QueueType } from "@/types";
+import { Queue, Worker } from "bullmq";
 import { Window } from "@/utils";
-
-const HEALTHY_THRESHOLD = 10;
-const WINDOW_SIZE = 500;
-
-dotenv.config();
-const { REDIS_HOST, REDIS_PORT } = process.env;
-
-// define bullmq queue options
-const options = {
-  connection: { host: REDIS_HOST, port: Number(REDIS_PORT) },
-};
-
-// names for mapping providers to queues
-const providers = ["provider-one", "provider-two", "provider-three"];
-// define provider ports
-const smsProviderPorts = [8071, 8072, 8073];
-const emailProviderPorts = [8091, 8092, 8093];
+import { workerCallback } from "@/worker";
+import { handler } from "@/handler";
+import { providers, options, SERVER_PORT, WINDOW_SIZE } from "@/config";
 
 // create queues for sms and email providers
-const smsQueues = providers.map((provider) => {
+export const smsQueues = providers.map((provider) => {
   return {
     healthy: true,
     window: new Window(WINDOW_SIZE),
@@ -30,7 +14,7 @@ const smsQueues = providers.map((provider) => {
   };
 });
 
-const emailQueues = providers.map((provider) => {
+export const emailQueues = providers.map((provider) => {
   return {
     healthy: true,
     window: new Window(WINDOW_SIZE),
@@ -40,72 +24,12 @@ const emailQueues = providers.map((provider) => {
 
 // create consumers to request providers
 const smsWorkers = providers.map((_, index) => {
-  return new Worker(
-    smsQueues[index].queue.name,
-    async (job: Job) => {
-      try {
-        console.log("Sending SMS with provider %d", index, "on port", smsProviderPorts[index])
-        const res = await fetch(
-          `localhost:${smsProviderPorts[index]}/api/sms/provider${index+1}`,
-          {
-            method: "POST",
-            body: JSON.stringify(job.data),
-          }
-        );
-        if (res.ok) {
-          smsQueues[index].window.success();
-          console.log("Success")
-        }
-      } catch (error) {
-        smsQueues[index].window.fail();
-        handler(job.data, smsQueues, "SMS");
-        if (smsQueues[index].window.getFailCount() > HEALTHY_THRESHOLD) {
-          smsQueues[index].healthy = false;
-        }
-        console.log("Fail", error.message)
-      }
-    },
-    options
-  );
+  return new Worker(smsQueues[index].queue.name, workerCallback, options);
 });
 
 const emailWorkers = providers.map((_, index) => {
-  return new Worker(
-    emailQueues[index].queue.name,
-    async (job: Job) => {
-      try {
-        const res = await fetch(
-          `localhost:${emailProviderPorts[index]}/api/email/provider${index+1}`,
-          {
-            method: "POST",
-            body: JSON.stringify(job.data),
-          }
-        );
-        if (res.ok) {
-          smsQueues[index].window.success();
-        }
-      } catch (error) {
-        smsQueues[index].window.fail();
-        handler(job.data, smsQueues, "Email");
-        if (smsQueues[index].window.getFailCount() > HEALTHY_THRESHOLD) {
-          smsQueues[index].healthy = false;
-        }
-      }
-    },
-    options
-  );
+  return new Worker(emailQueues[index].queue.name, workerCallback, options);
 });
-
-// handler to produce / enque jobs
-async function handler<T>(job: T, queues: QueueType[], type: string) {
-  let provider = -1,
-    healthy = false;
-  while (!healthy) {
-    provider = Math.floor(Math.random() * queues.length);
-    if (queues[provider].healthy) healthy = true;
-  }
-  await queues[provider].queue.add(`Send ${type}`, job);
-}
 
 const app = express();
 app.use(express.json());
@@ -121,7 +45,7 @@ app.post("/api/sms", async (req: Request, res: Response) => {
   if (!phone || !text) {
     res.status(400).json({ error: "Invalid request" });
   } else {
-    await handler({ phone, text }, smsQueues, "SMS");
+    await handler({ phone: phone, text: text }, smsQueues, "sms");
     res.status(200).json();
   }
 });
@@ -137,6 +61,6 @@ app.post("/api/email", async (req: Request, res: Response) => {
   }
 });
 
-app.listen(process.env.SERVER_PORT, () => {
-  console.log(`Server running on port ${process.env.SERVER_PORT}`);
+app.listen(SERVER_PORT, () => {
+  console.log(`Server running on port ${SERVER_PORT}`);
 });
