@@ -58,44 +58,37 @@ The incoming request is received by a handler function, which picks a provider
 at random and routes the request to the provider if it is healthy. Whether a
 provider is healthy is determined using a `healthy` flag, a boolean
 representation of the provider's health. For each provider, we maintain a fixed
-stats to keep track of the last 500 requests sent to that provider. If the ratio
-of success to error responses drop below a certain threshold, the `healthy` flag
-for that provider is toggled to false. This threshold is dynamically adjusted
-based on the server load, and can be made inversely proportional to the server
-load. If the server is receiving too many requests, we would want to avoid
-marking providers as unhealthy too soon.
+sized window to keep track of the last 500 requests sent to that provider. If
+the ratio of success to error responses drop below a certain threshold, the
+`healthy` flag for that provider is toggled to false. This threshold can be
+dynamically adjusted by the operator based on the server load, and can be made
+inversely proportional to the server load. If the server is receiving too many
+requests, we would want to avoid marking providers as unhealthy too soon.
 
 ## Request handling
 
 Request queuing and processing is done with a robust, dedicated third-party
-library, such as Bee-Queue, which is "a simple, fast, robust job/task queue for
-Node.js"[^2].
+library, BullMQ, which is "a Node.js library that implements a fast and robust
+queue system built on top of Redis that helps in resolving many modern age
+micro-services architectures."[^2].
 
 <details>
 <summary>Example</summary>
 
 ```js
-var Queue = require("bee-queue");
-var queue = new Queue("example");
+import { Queue } from "bullmq";
 
-var job = queue.createJob({ x: 2, y: 3 }).save();
-job.on("succeeded", function (result) {
-  console.log("Received result for job " + job.id + ": " + result);
-});
+const myQueue = new Queue("foo");
 
-// Process jobs from as many servers or processes as you like
-queue.process(function (job, done) {
-  console.log("Processing job " + job.id);
-  return done(null, job.data.x + job.data.y);
-});
+async function addJobs() {
+  await myQueue.add("myJobName", { foo: "bar" });
+  await myQueue.add("myJobName", { qux: "baz" });
+}
+
+await addJobs();
 ```
 
 </details>
-
-At least for small tasks, Bee-Queue performs better than other job queue
-processing libraries for Node such as Bull, which makes it a great choice for
-our use case. Other features include simpler job timeout and retry interface,
-job completion or failure reporting, and concurrent processing.
 
 We instantiate a separate queue for each provider. When the handler routes a
 request to a given provider, it essentially enqueues the request to the
@@ -125,9 +118,9 @@ cause the same request to be sent more than once, with unintended side effects.
 
 Since we assume that the server does not fail deterministically, we implement a
 retry mechanism with exponential delays, and having a separate queue for each
-provider allows us to set the delay factor for each provider individually. Every
-time a provider returns an error, we keep increasing it's delay, up to a
-maximum.
+provider allows us to adjust the delay for each provider individually. Every
+time a provider returns an error, we keep increasing it's delay, until at some
+point, the provider is marked unhealthy.
 
 ## Recovering from unhealthy
 
@@ -138,16 +131,17 @@ system, could also be causing failures. Cascading timeouts or failures could
 then overwhelm the system. To address this, we adopt the circuit breaker
 pattern[^4].
 
-When a provider crosses a delay threshold, it is marked unhealthy, and we stop
-sending it requests. However, the handler function will randomly route requests
-to unhealthy providers in order to check its health. With enough successful
-responses, the provider's health metric can be brought back up, and it may be
+When a provider crosses a delay threshold, as in, its success to failure ratio
+dips below a certain threshold, it is marked unhealthy, and we stop sending it
+requests. However, the handler function will still randomly route requests to
+unhealthy providers in order to check its health. With enough successful
+responses, the provider's health metrics can be brought back up, and it may be
 marked healthy for use again.
 
 [^1]:
     [What are the benefits of a microservices architecture?](https://about.gitlab.com/blog/2022/09/29/what-are-the-benefits-of-a-microservices-architecture/)
 
-[^2]: [bee-queue](https://www.npmjs.com/package/bee-queue/v/0.3.0)
+[^2]: [What is BullMQ](https://docs.bullmq.io)
 [^3]:
     [Retry pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/retry)
 
