@@ -1,28 +1,35 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Queue, Worker } from "bullmq";
-import { Window } from "@/utils";
+import { QueueType } from "./types";
+import { Stats } from "@/utils";
 import { workerCallback } from "@/worker";
 import { handler } from "@/handler";
 import { providers, options, SERVER_PORT, WINDOW_SIZE } from "@/config";
 
-// create queues for sms and email providers
-export const smsQueues = providers.map((provider) => {
+// wrappers around bullmq Queue instances
+// the Stats class keeps track of provider health
+// based on last WINDOW_SIZE requests
+// Queue is the actual bullmq Queue instance
+// constructor takes in the name of the Queue and some options
+export const smsQueues: QueueType[] = providers.map((provider) => {
   return {
-    healthy: true,
-    window: new Window(WINDOW_SIZE),
+    stats: new Stats(WINDOW_SIZE),
     queue: new Queue(`sms-${provider}`, options),
   };
 });
 
-export const emailQueues = providers.map((provider) => {
+export const emailQueues: QueueType[] = providers.map((provider) => {
   return {
-    healthy: true,
-    window: new Window(WINDOW_SIZE),
+    stats: new Stats(WINDOW_SIZE),
     queue: new Queue(`email-${provider}`, options),
   };
 });
 
-// create consumers to request providers
+// workers are consumers that process jobs from the queue
+// worker constructor takes in three arguments
+// i) queue name (1-1 mapping of queue and worker),
+// ii) a callback that tells the worker what to do
+// iii) some additional options
 const smsWorkers = providers.map((_, index) => {
   return new Worker(smsQueues[index].queue.name, workerCallback, options);
 });

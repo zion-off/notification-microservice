@@ -1,8 +1,7 @@
-import { Window } from "@/utils";
+import { Stats } from "@/utils";
 import { Queue } from "bullmq";
 
 export type QueueType = {
-  healthy: boolean;
-  window: Window;
-  queue: Queue;
+  stats: Stats; // stats class keeps track of provider health
+  queue: Queue; // bullmq Queue instance for storing jobs
 };

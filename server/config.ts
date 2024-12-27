@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// import server and redis config from env
 export const { SERVER_PORT, REDIS_HOST, REDIS_PORT } = process.env;
 
 // options for bullmq
@@ -11,8 +12,12 @@ export const options = {
 // for tracking success/error ratio of last N requests
 export const WINDOW_SIZE = 5;
 
-// if failures > N in a window, provider is flagged as unhealthy
-export const HEALTHY_THRESHOLD = 1;
+// 100ms base for exponential backoff
+export const DELAY_BASE = 100;
+
+// if failure:success ratio greater than this,
+// flag provider as unhealthy, and vice versa
+export const FAILURE_THRESHOLD = 0.7
 
 // names for mapping providers to queues
 export const providers = ["provider-one", "provider-two", "provider-three"];

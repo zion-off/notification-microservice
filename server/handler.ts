@@ -6,15 +6,19 @@ export async function handler<T>(
   type: string
 ) {
   let provider = -1,
-    healthy = false;
-  while (!healthy) {
+    healthyProviderFound = false;
+  while (!healthyProviderFound) {
     provider = Math.floor(Math.random() * queues.length);
-    if (queues[provider].healthy) healthy = true;
+    if (queues[provider].stats.healthy) healthyProviderFound = true;
   }
   const job = {
     type: type.trim().toLowerCase(),
     provider: provider,
     payload: payload,
   };
-  await queues[provider].queue.add(`Send ${type}`, job);
+  await queues[provider].queue.add(`Send ${type}`, job, {
+    attempts: 1,
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 }
