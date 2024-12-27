@@ -22,8 +22,9 @@ const constructURL = (type: "sms" | "email", provider: number) => {
 };
 
 // function to calculate delay based on failed attempts
+// with jitter
 const calculateDelay = (attempt: number) => {
-  return Math.pow(2, attempt) * DELAY_BASE;
+  return (Math.pow(2, attempt) * DELAY_BASE) + Math.random() * 100;
 };
 
 export const workerCallback = async (job: Job) => {
