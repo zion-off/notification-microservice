@@ -1,4 +1,4 @@
-class Window {
+export class Window {
   size: number;
   next: number;
   successCount: number;
@@ -19,7 +19,7 @@ class Window {
     if (index === 1) {
       this.successCount--;
     }
-    
+
     this.window[this.next % this.size] = 0;
     this.failureCount++;
     this.next++;

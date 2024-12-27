@@ -1,7 +1,11 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import { Queue, Worker, Job } from "bullmq";
-import { EmailHandlerProps } from "@/types";
+import { SMSHandlerProps, EmailHandlerProps, QueueType } from "@/types";
+import { Window } from "@/utils";
+
+const HEALTHY_THRESHOLD = 10;
+const WINDOW_SIZE = 500;
 
 dotenv.config();
 const { REDIS_HOST, REDIS_PORT } = process.env;
@@ -13,24 +17,53 @@ const options = {
 
 // names for mapping providers to queues
 const providers = ["provider-one", "provider-two", "provider-three"];
+// define provider ports
+const smsProviderPorts = [8071, 8072, 8073];
+const emailProviderPorts = [8091, 8092, 8093];
 
 // create queues for sms and email providers
-const smsQueues = providers.map(
-  (provider) => new Queue(`sms-${provider}`, options)
-);
-const emailQueues = providers.map(
-  (provider) => new Queue(`email-${provider}`, options)
-);
+const smsQueues = providers.map((provider) => {
+  return {
+    healthy: true,
+    window: new Window(WINDOW_SIZE),
+    queue: new Queue(`sms-${provider}`, options),
+  };
+});
+
+const emailQueues = providers.map((provider) => {
+  return {
+    healthy: true,
+    window: new Window(WINDOW_SIZE),
+    queue: new Queue(`email-${provider}`, options),
+  };
+});
 
 // create consumers to request providers
 const smsWorkers = providers.map((_, index) => {
   return new Worker(
-    smsQueues[index].name,
+    smsQueues[index].queue.name,
     async (job: Job) => {
-      console.log(`Sending SMS with provider ${index}`);
-      console.log(job.data.subject);
-      console.log(job.data.body);
-      console.log(job.data.recipients);
+      try {
+        console.log("Sending SMS with provider %d", index, "on port", smsProviderPorts[index])
+        const res = await fetch(
+          `localhost:${smsProviderPorts[index]}/api/sms/provider${index+1}`,
+          {
+            method: "POST",
+            body: JSON.stringify(job.data),
+          }
+        );
+        if (res.ok) {
+          smsQueues[index].window.success();
+          console.log("Success")
+        }
+      } catch (error) {
+        smsQueues[index].window.fail();
+        handler(job.data, smsQueues, "SMS");
+        if (smsQueues[index].window.getFailCount() > HEALTHY_THRESHOLD) {
+          smsQueues[index].healthy = false;
+        }
+        console.log("Fail", error.message)
+      }
     },
     options
   );
@@ -38,35 +71,70 @@ const smsWorkers = providers.map((_, index) => {
 
 const emailWorkers = providers.map((_, index) => {
   return new Worker(
-    emailQueues[index].name,
+    emailQueues[index].queue.name,
     async (job: Job) => {
-      console.log(`Sending email with provider ${index}`);
-      console.log(job.data.subject);
-      console.log(job.data.body);
-      console.log(job.data.recipients);
+      try {
+        const res = await fetch(
+          `localhost:${emailProviderPorts[index]}/api/email/provider${index+1}`,
+          {
+            method: "POST",
+            body: JSON.stringify(job.data),
+          }
+        );
+        if (res.ok) {
+          smsQueues[index].window.success();
+        }
+      } catch (error) {
+        smsQueues[index].window.fail();
+        handler(job.data, smsQueues, "Email");
+        if (smsQueues[index].window.getFailCount() > HEALTHY_THRESHOLD) {
+          smsQueues[index].healthy = false;
+        }
+      }
     },
     options
   );
 });
 
-function smsHandler() {}
-
-async function emailHandler(EmailJob: EmailHandlerProps) {
-  const provider = Math.floor(Math.random() * emailQueues.length);
-  await emailQueues[provider].add("Send Email", EmailJob);
+// handler to produce / enque jobs
+async function handler<T>(job: T, queues: QueueType[], type: string) {
+  let provider = -1,
+    healthy = false;
+  while (!healthy) {
+    provider = Math.floor(Math.random() * queues.length);
+    if (queues[provider].healthy) healthy = true;
+  }
+  await queues[provider].queue.add(`Send ${type}`, job);
 }
 
 const app = express();
 app.use(express.json());
 
+// middleware to handle errors thrown by request parser
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  res.status(500).json({ error: err.message });
+});
+
 // register sms route
-app.post("/api/sms", (req: Request, res: Response) => {});
+app.post("/api/sms", async (req: Request, res: Response) => {
+  const { phone, text } = req.body;
+  if (!phone || !text) {
+    res.status(400).json({ error: "Invalid request" });
+  } else {
+    await handler({ phone, text }, smsQueues, "SMS");
+    res.status(200).json();
+  }
+});
 
 // register email route
 app.post("/api/email", async (req: Request, res: Response) => {
   const { subject, body, recipients } = req.body;
-  await emailHandler({ subject, body, recipients });
-  res.status(200).json({ message: "Email processed successfully" });
+  if (!subject || !body || !recipients) {
+    res.status(400).json({ error: "Invalid request" });
+  } else {
+    await handler({ subject, body, recipients }, emailQueues, "email");
+    res.status(200).json();
+  }
 });
 
 app.listen(process.env.SERVER_PORT, () => {
