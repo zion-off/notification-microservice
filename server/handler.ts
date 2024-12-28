@@ -5,8 +5,6 @@ export async function handler(
   queues: QueueType[],
   type: "email" | "sms"
 ) {
-  //DEBUG
-  console.log("Handler received: ", payload, queues, type);
   // ascertain which providers are healthy and which are not
   const healthyProviders = queues
     .map((queue, index) => ({ queue, index }))
@@ -38,8 +36,6 @@ export async function handler(
     selectedProvider = healthyProviders[providerIndex];
   }
 
-  // DEBUG
-  console.log("Handler's selected provider: ", selectedProvider);
   // prepare the job for the queue
   const job: JobType = {
     type: type.trim().toLowerCase() as "email" | "sms",
@@ -47,8 +43,6 @@ export async function handler(
     payload: payload,
   };
 
-  // DEBUG
-  console.log("Job created: ", job);
   await queues[selectedProvider.index].queue.add(`Send ${type}`, job, {
     attempts: 1, // retries are handled by the handler, so 1 attempt is sufficient
     removeOnComplete: true, // removes successful job from the queue

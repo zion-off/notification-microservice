@@ -12,7 +12,7 @@ export class Stats {
   constructor(size: number) {
     this.size = size;
     this.next = 0;
-    this.stats = new Array(size).fill(0);
+    this.stats = new Array(size).fill(-1);
     this.successCount = 0;
     this.failureCount = 0;
     this.attempts = 0;

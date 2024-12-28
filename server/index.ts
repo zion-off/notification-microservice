@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
+import { server } from "@/websocket";
 import { handler } from "@/handler";
 import { SERVER_PORT } from "@/config";
 import { emailQueues, smsQueues } from "@/broker";
@@ -25,7 +26,6 @@ app.post("/api/sms", async (req: Request, res: Response) => {
 // register email route
 app.post("/api/email", async (req: Request, res: Response) => {
   const { subject, body, recipients } = req.body;
-  console.log("email route received: ", req.body)
   if (!subject || !body || !recipients) {
     res.status(400).json({ error: "Invalid request" });
   } else {
@@ -36,4 +36,8 @@ app.post("/api/email", async (req: Request, res: Response) => {
 
 app.listen(SERVER_PORT, () => {
   console.log(`Server running on port ${SERVER_PORT}`);
+});
+
+server.listen(process.env.SOCKETIO_PORT, () => {
+  console.log(`SocketIO server istening on port ${process.env.SOCKETIO_PORT}`);
 });

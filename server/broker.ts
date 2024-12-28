@@ -37,7 +37,6 @@ export const workerCallback = async (job: Job) => {
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
     });
-    console.log("made request", res);
     if (res.ok) {
       // log success
       queues[provider].stats.logSuccess();
