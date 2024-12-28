@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  provider:
+    build:
+      context: ./provider
+      dockerfile: Dockerfile
+    container_name: provider
+    command: ["npm", "run", "start"]
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8071:8071"
+      - "8072:8072"
+      - "8073:8073"
+      - "8091:8091"
+      - "8092:8092"
+      - "8093:8093"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server
+    command: ["npm", "run", "start"]
+    depends_on:
+      - redis
+    env_file:
+      - ./server/.env
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client
+    command: ["npm", "run", "dev"]
+    depends_on:
+      - server
+    env_file:
+      - ./client/.env
+    ports:
+      - "3000:3000"
