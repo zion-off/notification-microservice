@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GeistMono } from 'geist/font/mono'
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
@@ -13,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-regular antialiased h-screen`}>
+      <body className={`font-regular antialiased h-screen ${GeistMono.variable}`}>
         {children}
         <Toaster />
       </body>

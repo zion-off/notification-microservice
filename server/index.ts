@@ -1,10 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { server } from "@/websocket";
 import { handler } from "@/handler";
 import { SERVER_PORT } from "@/config";
 import { emailQueues, smsQueues } from "@/broker";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // middleware to handle errors thrown by request parser

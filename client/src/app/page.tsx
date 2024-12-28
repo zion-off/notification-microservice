@@ -41,11 +41,11 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full justify-center items-center gap-2">
-      <p>Connect to server to get started.</p>
+    <div className="flex flex-col h-full justify-center items-center gap-5">
+      <p className="text-md">Connect to server to get started.</p>
       <Button
         onClick={connect}
-        className={`w-1/4 ${connecting ? "animate-pulse" : ""}`}
+        className={`w-1/3 md:w-1/6 ${connecting ? "animate-pulse" : ""}`}
       >
         Connect
       </Button>

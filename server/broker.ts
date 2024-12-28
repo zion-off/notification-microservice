@@ -2,7 +2,7 @@ import { Job, Queue, Worker } from "bullmq";
 import { QueueType } from "./types";
 import { Stats } from "@/utils";
 import { handler } from "@/handler";
-import { emitEmailStats, emitSmsStats } from "@/websocket";
+import { emitEmailStats, emitSmsStats, emitQueueSize } from "@/websocket";
 import {
   providers,
   options,
@@ -57,10 +57,18 @@ export const workerCallback = async (job: Job) => {
   } catch (error) {
     console.log(error.message);
   } finally {
+    const queueStats = await Promise.all(
+      queues.map(async (provider) => {
+        const jobCounts = await provider.queue.getJobCounts();
+        return Object.values(jobCounts);
+      })
+    );
     if (type === "sms") {
       emitSmsStats();
+      emitQueueSize("sms", queueStats.flat());
     } else if (type === "email") {
       emitEmailStats();
+      emitQueueSize("email", queueStats.flat());
     }
   }
 };

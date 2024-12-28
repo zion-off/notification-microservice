@@ -1,9 +1,11 @@
 export default function Chart({
   window,
   healthy,
+  size,
 }: {
   window: number[];
   healthy: boolean;
+  size: number;
 }) {
   return (
     <main className="flex flex-col gap-1">
@@ -18,7 +20,7 @@ export default function Chart({
           }
         })}
       </div>
-      <div className="flex justify-between w-full text-xs">
+      <div className="flex justify-between w-full text-xxs font-mono tracking-tighter">
         <span className="flex gap-2 items-center">
           <div
             className={`${
@@ -31,11 +33,11 @@ export default function Chart({
               className={`${
                 healthy ? `bg-green-500` : `bg-red-500`
               } w-1 h-1 rounded-full`}
-            ></div>
+            />
           </div>
           <p>{healthy ? "Healthy" : "Unhealthy"}</p>
         </span>
-        <p>Queue size: N</p>
+        <p>Queue size: {size}</p>
       </div>
     </main>
   );
