@@ -19,7 +19,7 @@ const constructURL = (type: "sms" | "email", provider: number) => {
       ? emailProviderPorts[provider]
       : smsProviderPorts[provider];
 
-  return `http://localhost:${port}/api/${type}/provider${provider + 1}`;
+  return `http://${process.env.PROVIDER_HOST}:${port}/api/${type}/provider${provider + 1}`;
 };
 
 // function to calculate delay based on failed attempts
