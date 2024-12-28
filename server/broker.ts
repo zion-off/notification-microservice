@@ -2,6 +2,7 @@ import { Job, Queue, Worker } from "bullmq";
 import { QueueType } from "./types";
 import { Stats } from "@/utils";
 import { handler } from "@/handler";
+import { emitEmailStats, emitSmsStats } from "@/websocket";
 import {
   providers,
   options,
@@ -24,7 +25,7 @@ const constructURL = (type: "sms" | "email", provider: number) => {
 // function to calculate delay based on failed attempts
 // with jitter
 const calculateDelay = (attempt: number) => {
-  return (Math.pow(2, attempt) * DELAY_BASE) + Math.random() * 100;
+  return Math.pow(2, attempt) * DELAY_BASE + Math.random() * 100;
 };
 
 export const workerCallback = async (job: Job) => {
@@ -55,6 +56,12 @@ export const workerCallback = async (job: Job) => {
     }
   } catch (error) {
     console.log(error.message);
+  } finally {
+    if (type === "sms") {
+      emitSmsStats();
+    } else if (type === "email") {
+      emitEmailStats();
+    }
   }
 };
 

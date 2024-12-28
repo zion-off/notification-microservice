@@ -10,7 +10,7 @@ export const options = {
 };
 
 // for tracking success/error of last N requests
-export const WINDOW_SIZE = 5;
+export const WINDOW_SIZE = 100;
 
 // 100ms base for exponential backoff
 export const DELAY_BASE = 100;

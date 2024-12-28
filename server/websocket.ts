@@ -13,19 +13,40 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("WebSocket client connected");
-  const smsStats = smsQueues.map((queue) => queue.stats.stats);
-  const emailStats = emailQueues.map((queue) => queue.stats.stats);
-  socket.emit(
-    "stats",
+  socket.on("disconnect", () => {
+    console.log("WebSocket client disconnected");
+  });
+
+  socket.on("setup", emitEmailStats);
+  socket.on("setup", emitSmsStats);
+});
+
+export function emitEmailStats() {
+  const emailStats = emailQueues.map((queue) => ({
+    healthy: queue.stats.healthy,
+    window: queue.stats.stats,
+  }));
+
+  io.emit(
+    "emailStats",
     JSON.stringify({
-      sms: smsStats,
-      email: emailStats,
+      emailStats,
     })
   );
-  socket.on('disconnect', () => {
-    console.log('WebSocket client disconnected');
-  });
-});
+}
+
+export function emitSmsStats() {
+  const smsStats = smsQueues.map((queue) => ({
+    healthy: queue.stats.healthy,
+    window: queue.stats.stats,
+  }));
+  io.emit(
+    "smsStats",
+    JSON.stringify({
+      smsStats,
+    })
+  );
+}
 
 export function providerFail() {
   io.emit("Fail", {
