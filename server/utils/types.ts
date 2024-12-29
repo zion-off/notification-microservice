@@ -1,4 +1,4 @@
-import { Stats } from "@/utils";
+import { Stats } from "@/utils/window";
 import { Queue } from "bullmq";
 
 export type QueueType = {

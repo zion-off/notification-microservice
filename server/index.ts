@@ -1,9 +1,9 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { server } from "@/websocket";
-import { handler } from "@/handler";
-import { SERVER_PORT } from "@/config";
-import { emailQueues, smsQueues } from "@/broker";
+import { server } from "@/utils/websocket";
+import { handler } from "@/utils/handler";
+import { SERVER_PORT } from "@/utils/config";
+import { emailQueues, smsQueues } from "@/utils/broker";
 
 const app = express();
 app.use(cors());

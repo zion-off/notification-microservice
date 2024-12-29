@@ -1,4 +1,4 @@
-import { FAILURE_THRESHOLD } from "@/config";
+import { FAILURE_THRESHOLD } from "@/utils/config";
 
 export class Stats {
   size: number; // number of most recent request outcomes to keep track of

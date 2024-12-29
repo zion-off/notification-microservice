@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import http from "http";
-import { smsQueues, emailQueues } from "./broker";
+import { smsQueues, emailQueues } from "@/utils/broker";
 
 export const server = http.createServer();
 const io = new Server(server, {

@@ -1,4 +1,4 @@
-import { QueueType, JobType, SMSType, EmailType } from "@/types";
+import { QueueType, JobType, SMSType, EmailType } from "@/utils/types";
 
 export async function handler(
   payload: SMSType | EmailType,

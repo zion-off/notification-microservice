@@ -1,8 +1,8 @@
 import { Job, Queue, Worker } from "bullmq";
 import { QueueType } from "./types";
-import { Stats } from "@/utils";
-import { handler } from "@/handler";
-import { emitEmailStats, emitSmsStats, emitQueueSize } from "@/websocket";
+import { Stats } from "@/utils/window";
+import { handler } from "@/utils/handler";
+import { emitEmailStats, emitSmsStats, emitQueueSize } from "@/utils/websocket";
 import {
   providers,
   options,
@@ -10,7 +10,7 @@ import {
   smsProviderPorts,
   emailProviderPorts,
   DELAY_BASE,
-} from "@/config";
+} from "@/utils/config";
 
 // helper function to construct provider endpoint from index
 const constructURL = (type: "sms" | "email", provider: number) => {
