@@ -20,38 +20,42 @@ export class Stats {
   }
 
   logFail() {
+    console.log("Fail");
     const index = this.stats[this.next % this.size];
-    if (index === 1) {
-      this.successCount--;
-    }
+    if (index === 1) this.successCount--;
+    else if (index === 0) this.failureCount--;
     this.stats[this.next % this.size] = 0;
     this.failureCount++;
     this.next++;
     // check if this provider has failed enough times
-    // if it has, mark it as unhealthy
-    if (this.healthy) {
-      this.attempts++;
-      if (this.failureCount / this.successCount >= FAILURE_THRESHOLD) {
+    // if it has, mark it unhealthy
+    if (this.successCount === 0) {
+      if (this.failureCount >= this.size) {
         this.healthy = false;
       }
+    } else if (this.failureCount / this.successCount >= FAILURE_THRESHOLD) {
+      this.healthy = false;
     }
+    this.attempts++;
   }
 
   logSuccess() {
+    console.log("Success");
     const index = this.stats[this.next % this.size];
-    if (index === 0) {
-      this.failureCount--;
-    }
+    if (index === 1) this.successCount--;
+    else if (index === 0) this.failureCount--;
     this.stats[this.next % this.size] = 1;
     this.successCount++;
     this.next++;
     // check if this was an unhealthy provider
     // if it was, see if it can be marked healthy again
-    if (!this.healthy) {
+    const HEALTHY_THRESHOLD = FAILURE_THRESHOLD / 2;
+    if (
+      !this.healthy &&
+      this.failureCount / this.successCount < HEALTHY_THRESHOLD
+    ) {
+      this.healthy = true;
       this.attempts = 0;
-      if (this.failureCount / this.successCount < FAILURE_THRESHOLD) {
-        this.healthy = true;
-      }
     }
   }
 }

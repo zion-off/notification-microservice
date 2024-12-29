@@ -2,31 +2,8 @@ import { Job, Queue, Worker } from "bullmq";
 import { QueueType } from "./types";
 import { Stats } from "@/utils/window";
 import { handler } from "@/utils/handler";
-import { emitEmailStats, emitSmsStats, emitQueueSize } from "@/utils/websocket";
-import {
-  providers,
-  options,
-  WINDOW_SIZE,
-  smsProviderPorts,
-  emailProviderPorts,
-  DELAY_BASE,
-} from "@/utils/config";
-
-// helper function to construct provider endpoint from index
-const constructURL = (type: "sms" | "email", provider: number) => {
-  const port =
-    type === "email"
-      ? emailProviderPorts[provider]
-      : smsProviderPorts[provider];
-
-  return `http://${process.env.PROVIDER_HOST}:${port}/api/${type}/provider${provider + 1}`;
-};
-
-// function to calculate delay based on failed attempts
-// with jitter
-const calculateDelay = (attempt: number) => {
-  return Math.pow(2, attempt) * DELAY_BASE + Math.random() * 100;
-};
+import { constructURL, calculateDelay, emit } from "@/utils/helpers";
+import { providers, options, WINDOW_SIZE } from "@/utils/config";
 
 export const workerCallback = async (job: Job) => {
   const { type, provider, payload } = job.data;
@@ -41,11 +18,9 @@ export const workerCallback = async (job: Job) => {
     if (res.ok) {
       // log success
       queues[provider].stats.logSuccess();
-      console.log("Success");
     } else if (res.status === 500) {
       // log failure
       queues[provider].stats.logFail();
-      console.log("Fail");
       // send the job back for retrying
       handler(job.data, queues, type);
       // put queue to sleep and increase delay
@@ -57,19 +32,7 @@ export const workerCallback = async (job: Job) => {
   } catch (error) {
     console.log(error.message);
   } finally {
-    const queueStats = await Promise.all(
-      queues.map(async (provider) => {
-        const jobCounts = await provider.queue.getJobCounts();
-        return Object.values(jobCounts);
-      })
-    );
-    if (type === "sms") {
-      emitSmsStats();
-      emitQueueSize("sms", queueStats.flat());
-    } else if (type === "email") {
-      emitEmailStats();
-      emitQueueSize("email", queueStats.flat());
-    }
+    emit(queues, type);
   }
 };
 
