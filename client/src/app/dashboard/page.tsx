@@ -46,9 +46,9 @@ export default function Dashboard() {
     try {
       const data = JSON.parse(sizes);
       if (data.type === "sms") {
-        setSmsQueueSizes(data.jobCounts);
+        setSmsQueueSizes(data.count);
       } else if (data.type === "email") {
-        setEmailQueueSizes(data.jobCounts);
+        setEmailQueueSizes(data.count);
       }
     } catch (error) {
       console.log(error);

@@ -1,4 +1,4 @@
-import { FAILURE_THRESHOLD } from "@/utils/config";
+import { HEALTHY_THRESHOLD, UNHEALTHY_THRESHOLD } from "@/utils/config";
 
 export class Stats {
   size: number; // number of most recent request outcomes to keep track of
@@ -32,7 +32,7 @@ export class Stats {
       if (this.failureCount >= this.size) {
         this.healthy = false;
       }
-    } else if (this.failureCount / this.successCount >= FAILURE_THRESHOLD) {
+    } else if (this.failureCount / this.successCount >= UNHEALTHY_THRESHOLD) {
       this.healthy = false;
     }
     this.attempts++;
@@ -47,10 +47,9 @@ export class Stats {
     this.next++;
     // check if this was an unhealthy provider
     // if it was, see if it can be marked healthy again
-    const HEALTHY_THRESHOLD = FAILURE_THRESHOLD / 2;
     if (
       !this.healthy &&
-      this.failureCount / this.successCount < HEALTHY_THRESHOLD
+      this.successCount / this.failureCount > HEALTHY_THRESHOLD
     ) {
       this.healthy = true;
       this.attempts = 0;

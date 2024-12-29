@@ -5,22 +5,34 @@ dotenv.config();
 export const { SERVER_PORT, REDIS_HOST, REDIS_PORT } = process.env;
 
 // options for bullmq
-export const options = {
+export const QUEUE_OPTIONS = {
   connection: { host: REDIS_HOST, port: Number(REDIS_PORT) },
+};
+
+export const WORKER_OPTIONS = {
+  connection: { host: REDIS_HOST, port: Number(REDIS_PORT) },
+};
+
+export const JOB_OPTIONS = {
+  attempts: 1, // retries are handled by the handler, so 1 attempt is sufficient
+  removeOnComplete: true, // removes successful job from the queue
+  removeOnFail: true, // removes failed job from queue
 };
 
 // for tracking success/error of last N requests
 export const WINDOW_SIZE = 100;
 
 // 100ms base for exponential backoff
-export const DELAY_BASE = 100;
+export const DELAY_BASE = 10;
 
 // max delay
-export const MAX_DELAY = 2000;
+export const MAX_DELAY = 100;
 
 // if failure:success ratio greater than this,
 // flag provider as unhealthy, and vice versa
-export const FAILURE_THRESHOLD = 0.7
+export const UNHEALTHY_THRESHOLD = 0.7;
+export const HEALTHY_THRESHOLD =
+  Math.round((UNHEALTHY_THRESHOLD / 3) * 10) / 10;
 
 // names for mapping providers to queues
 export const providers = ["provider-one", "provider-two", "provider-three"];

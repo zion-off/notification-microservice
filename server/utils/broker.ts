@@ -3,19 +3,18 @@ import { QueueType } from "./types";
 import { Stats } from "@/utils/window";
 import { handler } from "@/utils/handler";
 import { constructURL, calculateDelay, emit } from "@/utils/helpers";
-import { providers, options, WINDOW_SIZE } from "@/utils/config";
+import {
+  providers,
+  QUEUE_OPTIONS,
+  WORKER_OPTIONS,
+  WINDOW_SIZE,
+} from "@/utils/config";
 
 export const processor = async (job: Job) => {
   const { id, type, provider, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
-  console.log(
-    `Worker pulled job ${id} from queue ${provider}: ${JSON.stringify(
-      job.data,
-      null,
-      2
-    )}`
-  );
+  console.log(`Worker pulled job ${id} from queue ${provider}.`);
   try {
     const url = await constructURL(type, provider);
     const res = await fetch(url, {
@@ -36,7 +35,7 @@ export const processor = async (job: Job) => {
       queue.stats.logFail();
       // send the job back for retrying
       const otherQueues = queues.filter((_, i) => i !== provider);
-      await handler(id, job.data.payload, otherQueues, type);
+      await handler(id, payload, otherQueues, type);
       // put queue to sleep and increase delay
       await queue.queue.pause();
       setTimeout(async () => {
@@ -55,17 +54,6 @@ export const processor = async (job: Job) => {
   }
 };
 
-// debug processor
-const debugProcessor = async (job: Job) => {
-  try {
-    console.log(`Processing job #${job.id}, job data: ${job.data}`);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    console.log(`Finished processing job #${job.id}`);
-  }
-};
-
 // wrappers around bullmq Queue instances
 // the Stats class keeps track of provider health
 // based on last WINDOW_SIZE requests
@@ -74,14 +62,14 @@ const debugProcessor = async (job: Job) => {
 export const smsQueues: QueueType[] = providers.map((provider) => {
   return {
     stats: new Stats(WINDOW_SIZE),
-    queue: new Queue(`sms-${provider}`, options),
+    queue: new Queue(`sms-${provider}`, QUEUE_OPTIONS),
   };
 });
 
 export const emailQueues: QueueType[] = providers.map((provider) => {
   return {
     stats: new Stats(WINDOW_SIZE),
-    queue: new Queue(`email-${provider}`, options),
+    queue: new Queue(`email-${provider}`, QUEUE_OPTIONS),
   };
 });
 
@@ -91,9 +79,9 @@ export const emailQueues: QueueType[] = providers.map((provider) => {
 // ii) a callback that tells the worker what to do
 // iii) some additional options
 const smsWorkers = providers.map((provider) => {
-  return new Worker(`email-${provider}`, processor, options);
+  return new Worker(`email-${provider}`, processor, WORKER_OPTIONS);
 });
 
 const emailWorkers = providers.map((provider) => {
-  return new Worker(`sms-${provider}`, processor, options);
+  return new Worker(`sms-${provider}`, processor, WORKER_OPTIONS);
 });

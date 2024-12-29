@@ -48,12 +48,12 @@ export function emitSmsStats() {
   );
 }
 
-export function emitQueueSize(type: "sms" | "email", jobCounts: number[]) {
+export function emitQueueSize(type: "sms" | "email", count: number[]) {
   io.emit(
     "queueSize",
     JSON.stringify({
       type: type,
-      jobCounts: jobCounts,
+      count: count,
     })
   );
 }

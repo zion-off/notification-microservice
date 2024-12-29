@@ -28,15 +28,20 @@ export const calculateDelay = (attempt: number) => {
 
 // send stats to any connected clients
 export const emit = async (queues: QueueType[], type: "email" | "sms") => {
-  const queueStats = await Promise.all(
+  const queueStats: number[] = await Promise.all(
     queues.map(async (provider) => {
       const jobCounts = await provider.queue.getJobCounts();
-      return Object.values(jobCounts);
+      const totalJobCount = Object.values(jobCounts).reduce(
+        (sum, count) => sum + count,
+        0
+      );
+      console.log(totalJobCount);
+      return totalJobCount;
     })
   );
   if (type === "sms") {
     emitSmsStats();
-    emitQueueSize("sms", queueStats.flat());
+    emitQueueSize("sms", queueStats);
   } else if (type === "email") {
     emitEmailStats();
     emitQueueSize("email", queueStats.flat());
