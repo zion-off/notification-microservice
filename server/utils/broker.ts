@@ -5,9 +5,11 @@ import { handler } from "@/utils/handler";
 import { constructURL, calculateDelay, emit } from "@/utils/helpers";
 import { providers, options, WINDOW_SIZE } from "@/utils/config";
 
-export const workerCallback = async (job: Job) => {
+export const processor = async (job: Job) => {
   const { type, provider, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
+  const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
+  console.log(`Processing with provider ${provider}`)
   try {
     const url = constructURL(type, provider);
     const res = await fetch(url, {
@@ -17,17 +19,20 @@ export const workerCallback = async (job: Job) => {
     });
     if (res.ok) {
       // log success
-      queues[provider].stats.logSuccess();
+      console.log("Success");
+      queue.stats.logSuccess();
     } else if (res.status === 500) {
       // log failure
-      queues[provider].stats.logFail();
+      console.log("Fail");
+      queue.stats.logFail();
       // send the job back for retrying
-      handler(job.data, queues, type);
+      const otherQueues = queues.filter((q, i) => i !== provider)
+      handler(job.data, otherQueues, type);
       // put queue to sleep and increase delay
-      await queues[provider].queue.pause();
+      await queue.queue.pause();
       setTimeout(async () => {
-        await queues[provider].queue.resume();
-      }, calculateDelay(queues[provider].stats.attempts));
+        await queue.queue.resume();
+      }, calculateDelay(queue.stats.attempts));
     }
   } catch (error) {
     console.log(error.message);
@@ -61,9 +66,9 @@ export const emailQueues: QueueType[] = providers.map((provider) => {
 // ii) a callback that tells the worker what to do
 // iii) some additional options
 const smsWorkers = providers.map((_, index) => {
-  return new Worker(smsQueues[index].queue.name, workerCallback, options);
+  return new Worker(smsQueues[index].queue.name, processor, options);
 });
 
 const emailWorkers = providers.map((_, index) => {
-  return new Worker(emailQueues[index].queue.name, workerCallback, options);
+  return new Worker(emailQueues[index].queue.name, processor, options);
 });

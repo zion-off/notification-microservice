@@ -15,6 +15,9 @@ export const WINDOW_SIZE = 100;
 // 100ms base for exponential backoff
 export const DELAY_BASE = 100;
 
+// max delay
+export const MAX_DELAY = 2000;
+
 // if failure:success ratio greater than this,
 // flag provider as unhealthy, and vice versa
 export const FAILURE_THRESHOLD = 0.7

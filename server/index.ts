@@ -31,7 +31,7 @@ app.post("/api/email", async (req: Request, res: Response) => {
   if (!subject || !body || !recipients) {
     res.status(400).json({ error: "Invalid request" });
   } else {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       await handler({ subject, body, recipients }, emailQueues, "email");
     }
 

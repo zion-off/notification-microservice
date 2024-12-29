@@ -20,7 +20,6 @@ export class Stats {
   }
 
   logFail() {
-    console.log("Fail");
     const index = this.stats[this.next % this.size];
     if (index === 1) this.successCount--;
     else if (index === 0) this.failureCount--;
@@ -40,7 +39,6 @@ export class Stats {
   }
 
   logSuccess() {
-    console.log("Success");
     const index = this.stats[this.next % this.size];
     if (index === 1) this.successCount--;
     else if (index === 0) this.failureCount--;
