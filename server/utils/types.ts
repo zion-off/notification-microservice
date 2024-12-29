@@ -18,7 +18,6 @@ export type EmailType = {
 };
 
 export type JobType = {
-  id: number,
   type: "sms" | "email";
   provider: number;
   payload: SMSType | EmailType;

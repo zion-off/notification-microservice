@@ -46,7 +46,6 @@ export const emit = async (
         (sum, count) => sum + count,
         0
       );
-      console.log(totalJobCount);
       return totalJobCount;
     })
   );

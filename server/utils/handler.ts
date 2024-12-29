@@ -2,7 +2,6 @@ import { QueueType, JobType, SMSType, EmailType } from "@/utils/types";
 import { JOB_OPTIONS } from "./config";
 
 export async function handler(
-  jobIndex: number,
   payload: SMSType | EmailType,
   queues: QueueType[],
   type: "email" | "sms"
@@ -30,7 +29,6 @@ export async function handler(
 
   // prepare the job for the queue
   const job: JobType = {
-    id: jobIndex,
     type: type.trim().toLowerCase() as "email" | "sms",
     provider: selectedProvider.index,
     payload: payload,
@@ -42,5 +40,5 @@ export async function handler(
     JOB_OPTIONS
   );
 
-  console.log(`Job ${jobIndex} sent to provider ${selectedProvider.index}`);
+  console.log(`${res.id} sent to provider ${selectedProvider.index}`);
 }
