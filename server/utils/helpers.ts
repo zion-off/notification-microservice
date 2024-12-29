@@ -8,7 +8,7 @@ import { emitEmailStats, emitSmsStats, emitQueueSize } from "@/utils/websocket";
 import { QueueType } from "./types";
 
 // helper function to construct provider endpoint from index
-export const constructURL = (type: "sms" | "email", provider: number) => {
+export const constructURL = async (type: "sms" | "email", provider: number) => {
   const port =
     type === "email"
       ? emailProviderPorts[provider]
@@ -23,9 +23,6 @@ export const constructURL = (type: "sms" | "email", provider: number) => {
 // with jitter
 export const calculateDelay = (attempt: number) => {
   const delay = Math.pow(2, attempt) * DELAY_BASE + Math.random() * 100;
-  console.log(
-    `Calculated delay ${delay}, returning ${Math.min(delay, MAX_DELAY)}`
-  );
   return Math.min(delay, MAX_DELAY);
 };
 

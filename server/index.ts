@@ -5,6 +5,8 @@ import { handler } from "@/utils/handler";
 import { SERVER_PORT } from "@/utils/config";
 import { emailQueues, smsQueues } from "@/utils/broker";
 
+let index = 0;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -20,7 +22,7 @@ app.post("/api/sms", async (req: Request, res: Response) => {
   if (!phone || !text) {
     res.status(400).json({ error: "Invalid request" });
   } else {
-    await handler({ phone: phone, text: text }, smsQueues, "sms");
+    await handler(index++, { phone: phone, text: text }, smsQueues, "sms");
     res.status(200).json();
   }
 });
@@ -31,10 +33,7 @@ app.post("/api/email", async (req: Request, res: Response) => {
   if (!subject || !body || !recipients) {
     res.status(400).json({ error: "Invalid request" });
   } else {
-    for (let i = 0; i < 5; i++) {
-      await handler({ subject, body, recipients }, emailQueues, "email");
-    }
-
+    await handler(index++, { subject, body, recipients }, emailQueues, "email");
     res.status(200).json();
   }
 });

@@ -1,6 +1,7 @@
 import { QueueType, JobType, SMSType, EmailType } from "@/utils/types";
 
 export async function handler(
+  jobIndex: number,
   payload: SMSType | EmailType,
   queues: QueueType[],
   type: "email" | "sms"
@@ -26,22 +27,29 @@ export async function handler(
     ? unhealthyProviders[providerIndex]
     : healthyProviders[providerIndex];
 
-  console.log(
-    `Selected [${shouldSelectUnhealthy ? "unhealthy" : "healthy"}] provider ${
-      selectedProvider.index
-    }`
-  );
+  // console.log(
+  //   `Selected [${shouldSelectUnhealthy ? "unhealthy" : "healthy"}] provider ${
+  //     selectedProvider.index
+  //   }`
+  // );
 
   // prepare the job for the queue
   const job: JobType = {
+    id: jobIndex,
     type: type.trim().toLowerCase() as "email" | "sms",
     provider: selectedProvider.index,
     payload: payload,
   };
 
-  await queues[selectedProvider.index].queue.add(`Send ${type}`, job, {
+  const JOB_OPTIONS = {
     attempts: 1, // retries are handled by the handler, so 1 attempt is sufficient
     removeOnComplete: true, // removes successful job from the queue
     removeOnFail: true, // removes failed job from queue
-  });
+  };
+  const res = await queues[selectedProvider.index].queue.add(
+    `Send ${type}`,
+    job,
+  );
+
+  console.log(`Job ${jobIndex} sent to provider ${selectedProvider.index}`);
 }
