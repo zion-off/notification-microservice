@@ -40,5 +40,5 @@ export async function handler(
     JOB_OPTIONS
   );
 
-  console.log(`${res.id} sent to provider ${selectedProvider.index}`);
+  console.log(`Job ${res.id} sent to provider ${selectedProvider.index}`);
 }

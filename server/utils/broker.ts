@@ -14,7 +14,7 @@ export const processor = async (job: Job) => {
   const { type, provider, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
-  console.log(`Worker pulled job ${job.id} from queue ${provider}.`);
+  console.log(`Worker pulled job ${job.id} from queue ${provider}`);
   let res: Response;
   try {
     const url = await constructURL(type, provider);
@@ -32,7 +32,6 @@ export const processor = async (job: Job) => {
     } else if (res.status === 500) {
       console.log(`Worker failed to do job ${job.id} in queue ${provider}`);
       // log failure
-      console.log(`Job ${job.id} in provider ${provider} failed`);
       queue.stats.logFail();
       // send the job back for retrying
       const otherQueues = queues.filter((_, i) => i !== provider);
