@@ -15,9 +15,10 @@ export const processor = async (job: Job) => {
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
   console.log(`Worker pulled job ${id} from queue ${provider}.`);
+  let res: Response;
   try {
     const url = await constructURL(type, provider);
-    const res = await fetch(url, {
+    res = await fetch(url, {
       method: "POST",
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
@@ -50,7 +51,7 @@ export const processor = async (job: Job) => {
   } catch (error) {
     console.log(error.message);
   } finally {
-    emit(queues, type);
+    emit(queues, type, res.ok, payload);
   }
 };
 

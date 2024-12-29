@@ -14,6 +14,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { sendEmail, sendSMS } from "@/utils/requests";
+import { SMSType, EmailType } from "@/utils/types";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -25,6 +26,28 @@ export default function Dashboard() {
   const [sendingSms, setSendingSms] = useState(false);
   const [emailRate, setEmailRate] = useState(0);
   const [smsRate, setSmsRate] = useState(0);
+  const [emailResults, setEmailResults] = useState<
+    { success: boolean; subject: string; body: string; recipients: string[] }[]
+  >([]);
+  const [smsResults, setSmsResults] = useState<
+    { success: boolean; phone: string; text: string }[]
+  >([]);
+
+  const emailContainerRef = useRef<HTMLDivElement | null>(null);
+  const smsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (emailContainerRef.current) {
+      emailContainerRef.current.scrollTop =
+        emailContainerRef.current.scrollHeight;
+    }
+  }, [emailResults]);
+
+  useEffect(() => {
+    if (smsContainerRef.current) {
+      smsContainerRef.current.scrollTop = smsContainerRef.current.scrollHeight;
+    }
+  }, [smsResults]);
 
   function onEmailStats(stats: string) {
     try {
@@ -55,6 +78,27 @@ export default function Dashboard() {
     }
   }
 
+  function onEmailResult(payload: EmailType, success: boolean) {
+    try {
+      const { subject, body, recipients } = payload;
+      setEmailResults((prev) => [
+        ...prev,
+        { success, subject, body, recipients },
+      ]);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  function onSmsResult(payload: SMSType, success: boolean) {
+    try {
+      const { phone, text } = payload;
+      setSmsResults((prev) => [...prev, { success, phone, text }]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
     if (!socket.connected) {
       router.push("/");
@@ -65,6 +109,16 @@ export default function Dashboard() {
     socket.on("smsStats", onSmsStats);
     socket.on("queueSize", updateQueueSizes);
     socket.emit("setup");
+    socket.on("smsResult", (message) => {
+      const { success, payload } = JSON.parse(message);
+      onSmsResult(payload, success);
+    });
+
+    // Receiving emailResult
+    socket.on("emailResult", (message) => {
+      const { success, payload } = JSON.parse(message);
+      onEmailResult(payload, success);
+    });
 
     return () => {
       socket.off("emailStats", onEmailStats);
@@ -121,7 +175,7 @@ export default function Dashboard() {
             <CardTitle>Email Service</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex">
+            <div>
               <div className="flex flex-col gap-5">
                 {emailStats.map((provider, index) => (
                   <Chart
@@ -134,11 +188,35 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
+          <CardFooter className="text-xxs font-mono">
+            <div
+              ref={emailContainerRef}
+              className="bg-gray-300 text-gray-700  w-full h-8 overflow-scroll"
+            >
+              {emailResults.map((res, index) => {
+                const { success, subject } = res;
+                return (
+                  <p
+                    key={index}
+                    className={success ? `bg-green-200` : `bg-red-200`}
+                  >
+                    {`${success ? "Sent" : "Failed to send"} email ${subject}`}
+                  </p>
+                );
+              })}
+            </div>
+          </CardFooter>
         </Card>
 
         <Card className="w-1/3">
           <CardHeader>
-            <CardTitle>Test Email Providers</CardTitle>
+            <div className="flex justify-between">
+              <CardTitle>Test Email Providers</CardTitle>
+              <Switch
+                checked={sendingEmails}
+                onCheckedChange={setSendingEmails}
+              />
+            </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-xs">
             <div className="flex flex-col gap-3">
@@ -172,12 +250,6 @@ export default function Dashboard() {
               <Slider defaultValue={[0.7]} min={0.1} max={0.9} step={0.01} />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Switch
-              checked={sendingEmails}
-              onCheckedChange={setSendingEmails}
-            />
-          </CardFooter>
         </Card>
       </div>
 
@@ -200,10 +272,33 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
+          <CardFooter className="text-xxs font-mono">
+            <div
+              ref={smsContainerRef}
+              className="bg-gray-300 text-gray-700 w-full h-8 overflow-scroll"
+            >
+              {smsResults.map((res, index) => {
+                const { success, phone, text } = res;
+                return (
+                  <p
+                    key={index}
+                    className={success ? `bg-green-200` : `bg-red-200`}
+                  >
+                    {`${success ? "Sent" : "Failed to send"} SMS to ${phone}`}
+                  </p>
+                );
+              })}
+            </div>
+          </CardFooter>
         </Card>
 
         <Card className="w-1/3">
           <CardHeader>
+            <div className="flex justify-between">
+              <CardTitle>Test Email Providers</CardTitle>
+              <Switch checked={sendingSms} onCheckedChange={setSendingSms} />
+            </div>
+
             <CardTitle>Test SMS Providers</CardTitle>
           </CardHeader>
           <CardContent>
@@ -238,9 +333,6 @@ export default function Dashboard() {
               <Slider defaultValue={[0.7]} min={0.1} max={0.9} step={0.01} />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Switch checked={sendingSms} onCheckedChange={setSendingSms} />
-          </CardFooter>
         </Card>
       </div>
     </main>

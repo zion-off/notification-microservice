@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import { smsQueues, emailQueues } from "@/utils/broker";
+import { SMSType, EmailType } from "./types";
 
 export const server = http.createServer();
 const io = new Server(server, {
@@ -58,16 +59,22 @@ export function emitQueueSize(type: "sms" | "email", count: number[]) {
   );
 }
 
-export function providerFail() {
-  io.emit("Fail", {
-    someProperty: "some value",
-    otherProperty: "other value",
-  }); // This will emit the event to all connected sockets
+export function emitSmsResult(payload: SMSType, success: boolean) {
+  io.emit(
+    "smsResult",
+    JSON.stringify({
+      success: success,
+      payload: payload,
+    })
+  );
 }
 
-export function providerSuccess() {
-  io.emit("Success", {
-    someProperty: "some value",
-    otherProperty: "other value",
-  }); // This will emit the event to all connected sockets
+export function emitEmailResult(payload: EmailType, success: boolean) {
+  io.emit(
+    "emailResult",
+    JSON.stringify({
+      success: success,
+      payload: payload,
+    })
+  );
 }
