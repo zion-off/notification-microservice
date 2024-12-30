@@ -298,8 +298,6 @@ export default function Dashboard() {
               <CardTitle>Test Email Providers</CardTitle>
               <Switch checked={sendingSms} onCheckedChange={setSendingSms} />
             </div>
-
-            <CardTitle>Test SMS Providers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3 text-xs">
