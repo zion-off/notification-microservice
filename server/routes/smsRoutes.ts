@@ -1,17 +1,8 @@
-import express, { Request, Response } from "express";
-import { handler } from "@/utils/handler";
-import { smsQueues } from "@/utils/broker";
+import express from "express";
+import { sendSmsController } from "@/controllers/smsControllers";
 
 const smsRouter = express.Router();
 
-smsRouter.post("/", async (req: Request, res: Response) => {
-  const { phone, text } = req.body;
-  if (!phone || !text) {
-    res.status(400).json({ error: "Invalid request" });
-  } else {
-    await handler({ phone: phone, text: text }, smsQueues, "sms");
-    res.status(200).json();
-  }
-});
+smsRouter.post("/", sendSmsController);
 
 export default smsRouter;

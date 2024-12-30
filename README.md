@@ -90,9 +90,12 @@ await addJobs();
 
 </details>
 
-We instantiate a separate queue for each provider. When the handler routes a
-request to a given provider, it essentially enqueues the request to the
-provider's respective queue.
+We instantiate a separate queue for each provider, which allows for finer
+control over each provider and facilitates horizontal scaling. For example, each
+queue can be rate limited in accordance with the corresponding provider's
+capacity, or the queues can be deployed across regions to ensure isolation. When
+the handler routes a request to a given provider, it essentially enqueues the
+request to the provider's respective queue.
 
 ## Retry after delay
 

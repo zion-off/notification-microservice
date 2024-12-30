@@ -1,8 +1,9 @@
 import { Job, Queue, Worker } from "bullmq";
-import { QueueType, JobType } from "./types";
+import { QueueType, JobType, EmailType, SMSType } from "./types";
 import { Stats } from "@/utils/window";
-import { handler } from "@/utils/handler";
-import { constructURL, calculateDelay, emit } from "@/utils/helpers";
+import { smsHandler } from "@/handlers/smsHandler";
+import { emailHandler } from "@/handlers/emailHandler";
+import { calculateDelay, emit } from "@/utils/helpers";
 import {
   providers,
   QUEUE_OPTIONS,
@@ -35,9 +36,10 @@ export const processor = async (job: Job<JobType>) => {
       console.log(`Worker failed to do job ${job.id} in queue ${provider}`);
       // log failure
       queue.stats.logFail();
-      // send the job back for retrying
-      const otherQueues = queues.filter((_, i) => i !== provider);
-      await handler(payload, otherQueues, type);
+      // send the job back for retrying and exclude this provider
+      type === "email"
+        ? emailHandler(payload as EmailType, provider)
+        : smsHandler(payload as SMSType, provider);
       // put queue to sleep and increase delay
       await queue.queue.pause();
       setTimeout(async () => {
