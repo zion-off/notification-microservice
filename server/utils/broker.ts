@@ -1,5 +1,5 @@
 import { Job, Queue, Worker } from "bullmq";
-import { QueueType } from "./types";
+import { QueueType, JobType } from "./types";
 import { Stats } from "@/utils/window";
 import { handler } from "@/utils/handler";
 import { constructURL, calculateDelay, emit } from "@/utils/helpers";
@@ -9,27 +9,29 @@ import {
   WORKER_OPTIONS,
   WINDOW_SIZE,
 } from "@/utils/config";
+import { ClientError, ServerError } from "./errors";
+import { Provider } from "@/utils/provider";
 
-export const processor = async (job: Job) => {
+export const processor = async (job: Job<JobType>) => {
   const { type, provider, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
+  const service =
+    type === "email" ? emailProviders[provider] : smsProviders[provider];
+
   console.log(`Worker pulled job ${job.id} from queue ${provider}`);
-  let res: Response;
+  let success: boolean;
   try {
-    const url = await constructURL(type, provider);
-    res = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (res.ok) {
+    success = await service.send(payload);
+    if (success) {
       console.log(
         `Worker successfully completed job ${job.id} in queue ${provider}`
       );
       // log success
       queue.stats.logSuccess();
-    } else if (res.status === 500) {
+    }
+  } catch (error) {
+    if (error instanceof ServerError) {
       console.log(`Worker failed to do job ${job.id} in queue ${provider}`);
       // log failure
       queue.stats.logFail();
@@ -41,16 +43,13 @@ export const processor = async (job: Job) => {
       setTimeout(async () => {
         await queue.queue.resume();
       }, calculateDelay(queue.stats.attempts));
+    } else if (error instanceof ClientError) {
+      console.log(`Job ${job.id} failed, ${error.message}, ${error.details}`);
     } else {
-      const responseText = await res.text();
-      throw new Error(
-        `Job ${job.id} failed with status ${res.status} (${res.statusText}). Response: ${responseText}`
-      );
+      console.error(`Unexpected error during job ${job.id}:`, error);
     }
-  } catch (error) {
-    console.log(error.message);
   } finally {
-    emit(queues, type, res.ok, payload);
+    emit(queues, type, success, payload);
   }
 };
 
@@ -84,4 +83,13 @@ const smsWorkers = providers.map((provider) => {
 
 const emailWorkers = providers.map((provider) => {
   return new Worker(`sms-${provider}`, processor, WORKER_OPTIONS);
+});
+
+// providers
+const smsProviders = providers.map((_, index) => {
+  return Provider.createProvider("sms", index);
+});
+
+const emailProviders = providers.map((_, index) => {
+  return Provider.createProvider("email", index);
 });
