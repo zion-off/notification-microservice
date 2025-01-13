@@ -28,7 +28,7 @@ export const JOB_OPTIONS: JobsOptions = {
 };
 
 // for tracking success/error of last N requests
-export const WINDOW_SIZE = 50;
+export const WINDOW_SIZE = 100;
 
 // 100ms base for exponential backoff
 export const DELAY_BASE = 10;

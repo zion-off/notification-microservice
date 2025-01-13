@@ -1,4 +1,4 @@
-import { HEALTHY_THRESHOLD, UNHEALTHY_THRESHOLD } from "@/utils/config";
+import { HEALTHY_THRESHOLD, UNHEALTHY_THRESHOLD } from "@/utils/websocket";
 
 export class Stats {
   size: number; // number of most recent request outcomes to keep track of

@@ -3,6 +3,9 @@ import http from "http";
 import { smsQueues, emailQueues } from "@/utils/broker";
 import { SMSType, EmailType } from "./types";
 
+export let UNHEALTHY_THRESHOLD = 0.7;
+export let HEALTHY_THRESHOLD = Math.round((UNHEALTHY_THRESHOLD / 3) * 10) / 10;
+
 export const server = http.createServer();
 const io = new Server(server, {
   cors: {
@@ -20,7 +23,13 @@ io.on("connection", (socket) => {
 
   socket.on("setup", emitEmailStats);
   socket.on("setup", emitSmsStats);
+  socket.on("updateUnhealthyThreshold", updateHealthyThreshold);
 });
+
+export function updateHealthyThreshold(size: number) {
+  UNHEALTHY_THRESHOLD = size;
+  HEALTHY_THRESHOLD = Math.round((UNHEALTHY_THRESHOLD / 3) * 10) / 10;
+}
 
 export function emitEmailStats() {
   const emailStats = emailQueues.map((queue) => ({
@@ -41,6 +50,7 @@ export function emitSmsStats() {
     healthy: queue.stats.healthy,
     window: queue.stats.stats,
   }));
+
   io.emit(
     "smsStats",
     JSON.stringify({

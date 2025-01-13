@@ -4,12 +4,7 @@ import { Stats } from "@/utils/window";
 import { smsHandler } from "@/handlers/smsHandler";
 import { emailHandler } from "@/handlers/emailHandler";
 import { calculateDelay, emit } from "@/utils/helpers";
-import {
-  providers,
-  QUEUE_OPTIONS,
-  WORKER_OPTIONS,
-  WINDOW_SIZE,
-} from "@/utils/config";
+import { providers, QUEUE_OPTIONS, WORKER_OPTIONS, WINDOW_SIZE } from "@/utils/config";
 import { ClientError, ServerError } from "./errors";
 import { Provider } from "@/utils/provider";
 

@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [sendingSms, setSendingSms] = useState(false);
   const [emailRate, setEmailRate] = useState(0);
   const [smsRate, setSmsRate] = useState(0);
+  const [unhealthyThreshold, setUnhealthyThreshold] = useState(0.7);
   const [emailResults, setEmailResults] = useState<
     { success: boolean; subject: string; body: string; recipients: string[] }[]
   >([]);
@@ -167,6 +168,10 @@ export default function Dashboard() {
     };
   }, [sendingSms, smsRate]);
 
+  useEffect(() => {
+    socket.emit("updateUnhealthyThreshold", unhealthyThreshold);
+  }, [unhealthyThreshold]);
+
   return (
     <main className="flex flex-col items-center h-full justify-center gap-5 w-full">
       <div className="flex gap-5 w-full justify-center">
@@ -240,14 +245,23 @@ export default function Dashboard() {
                 <p>0</p>
                 <p>1000</p>
               </div>
-              <Slider defaultValue={[100]} max={1000} step={1} />
+              <Slider defaultValue={[100]} max={1000} step={1} disabled />
 
-              <p>Failure threshold</p>
+              <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">
                 <p>0</p>
                 <p>0.9</p>
               </div>
-              <Slider defaultValue={[0.7]} min={0.1} max={0.9} step={0.01} />
+              <Slider
+                defaultValue={[0.7]}
+                min={0.1}
+                max={0.9}
+                step={0.01}
+                value={[unhealthyThreshold]}
+                onValueChange={(value) => {
+                  setUnhealthyThreshold(value[0]);
+                }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -321,14 +335,23 @@ export default function Dashboard() {
                 <p>0</p>
                 <p>1000</p>
               </div>
-              <Slider defaultValue={[100]} max={1000} step={1} />
+              <Slider defaultValue={[100]} max={1000} step={1} disabled />
 
-              <p>Failure threshold</p>
+              <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">
                 <p>0</p>
                 <p>0.9</p>
               </div>
-              <Slider defaultValue={[0.7]} min={0.1} max={0.9} step={0.01} />
+              <Slider
+                defaultValue={[0.7]}
+                min={0.1}
+                max={0.9}
+                step={0.01}
+                value={[unhealthyThreshold]}
+                onValueChange={(value) => {
+                  setUnhealthyThreshold(value[0]);
+                }}
+              />
             </div>
           </CardContent>
         </Card>
