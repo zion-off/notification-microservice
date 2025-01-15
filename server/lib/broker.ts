@@ -1,52 +1,41 @@
 import { Job, Queue, Worker } from "bullmq";
-import { QueueType, JobType, EmailType, SMSType } from "./types";
+import { QueueType, JobType } from "../utils/types";
 import { Stats } from "@/utils/window";
-import { smsHandler } from "@/handlers/smsHandler";
-import { emailHandler } from "@/handlers/emailHandler";
-import { calculateDelay, emit } from "@/utils/helpers";
-import { providers, QUEUE_OPTIONS, WORKER_OPTIONS, WINDOW_SIZE } from "@/utils/config";
-import { ClientError, ServerError } from "./errors";
+import { emit as emitStatsToSocket } from "@/utils/helpers";
 import { Provider } from "@/utils/provider";
+import {
+  providers,
+  QUEUE_OPTIONS,
+  WORKER_OPTIONS,
+  WINDOW_SIZE,
+} from "@/utils/config";
+import { jobFailHandler } from "@/utils/jobFailHandler";
 
 export const processor = async (job: Job<JobType>) => {
-  const { type, provider, payload } = job.data;
+  const { type, providerIndex, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
-  const queue = type === "email" ? emailQueues[provider] : smsQueues[provider];
+  const queue =
+    type === "email" ? emailQueues[providerIndex] : smsQueues[providerIndex];
   const service =
-    type === "email" ? emailProviders[provider] : smsProviders[provider];
+    type === "email"
+      ? emailProviders[providerIndex]
+      : smsProviders[providerIndex];
 
-  console.log(`Worker pulled job ${job.id} from queue ${provider}`);
-  let success: boolean;
+  console.log(`Worker pulled job ${job.id} from queue ${providerIndex}`);
+  let successFlag: boolean;
   try {
-    success = await service.send(payload);
-    if (success) {
+    successFlag = await service.send(payload);
+    if (successFlag) {
       console.log(
-        `Worker successfully completed job ${job.id} in queue ${provider}`
+        `Worker successfully completed job ${job.id} in queue ${providerIndex}`
       );
       // log success
       queue.stats.logSuccess();
     }
   } catch (error) {
-    if (error instanceof ServerError) {
-      console.log(`Worker failed to do job ${job.id} in queue ${provider}`);
-      // log failure
-      queue.stats.logFail();
-      // send the job back for retrying and exclude this provider
-      type === "email"
-        ? emailHandler(payload as EmailType, provider)
-        : smsHandler(payload as SMSType, provider);
-      // put queue to sleep and increase delay
-      await queue.queue.pause();
-      setTimeout(async () => {
-        await queue.queue.resume();
-      }, calculateDelay(queue.stats.attempts));
-    } else if (error instanceof ClientError) {
-      console.log(`Job ${job.id} failed, ${error.message}, ${error.details}`);
-    } else {
-      console.error(`Unexpected error during job ${job.id}:`, error);
-    }
+    await jobFailHandler({ error, job, providerIndex, queue, type, payload });
   } finally {
-    emit(queues, type, success, payload);
+    emitStatsToSocket(queues, type, successFlag, payload);
   }
 };
 

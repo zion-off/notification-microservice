@@ -1,22 +1,22 @@
 import { JobType, SMSType } from "@/utils/types";
 import { JOB_OPTIONS } from "@/utils/config";
-import { smsQueues } from "@/utils/broker";
+import { smsQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 
 export async function smsHandler(payload: SMSType, exclude? : number) {
   // select provider by passing in the relevant queues
-  const provider = selectProvider(smsQueues, exclude);
+  const providerIndex = selectProvider(smsQueues, exclude);
   // prepare the job for the queue
   const job: JobType = {
     type: "sms",
-    provider: provider,
+    providerIndex,
     payload: payload,
   };
-  const res = await smsQueues[provider].queue.add(
+  const res = await smsQueues[providerIndex].queue.add(
     `Send SMS`,
     job,
     JOB_OPTIONS
   );
 
-  console.log(`Job ${res.id} sent to provider ${provider}`);
+  console.log(`Job ${res.id} sent to provider ${providerIndex}`);
 }

@@ -1,6 +1,6 @@
 import { JobType, EmailType } from "@/utils/types";
 import { JOB_OPTIONS } from "@/utils/config";
-import { emailQueues } from "@/utils/broker";
+import { emailQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 
 export async function emailHandler(payload: EmailType, exclude? : number) {
@@ -9,7 +9,7 @@ export async function emailHandler(payload: EmailType, exclude? : number) {
   // prepare the job for the queue
   const job: JobType = {
     type: "email",
-    provider: provider,
+    providerIndex: provider,
     payload: payload,
   };
   const res = await emailQueues[provider].queue.add(

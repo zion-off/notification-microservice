@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import http from "http";
-import { smsQueues, emailQueues } from "@/utils/broker";
+import { smsQueues, emailQueues } from "@/lib/broker";
 import { SMSType, EmailType } from "./types";
 
 export let UNHEALTHY_THRESHOLD = 0.7;

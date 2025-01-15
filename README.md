@@ -125,6 +125,9 @@ provider allows us to adjust the delay for each provider individually. Every
 time a provider returns an error, we keep increasing it's delay, until at some
 point, the provider is marked unhealthy.
 
+In the odd case that requeuing fails, we've configured the queues to retry
+requeueing up to three times.
+
 ## Recovering from unhealthy
 
 In a distributed system, faults can occur as a result of anticipated events,

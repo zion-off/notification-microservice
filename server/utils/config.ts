@@ -19,12 +19,12 @@ export const WORKER_OPTIONS: WorkerOptions = {
     max: 1,
     duration: 1000,
   },
+  maxStalledCount: 3,
 };
 
 export const JOB_OPTIONS: JobsOptions = {
-  attempts: 1, // retries are handled by the handler, so 1 attempt is sufficient
+  attempts: 3, // provider failures are handled by the handler, this is just to retry if queueing fails
   removeOnComplete: true, // removes successful job from the queue
-  removeOnFail: true, // removes failed job from queue
 };
 
 // for tracking success/error of last N requests

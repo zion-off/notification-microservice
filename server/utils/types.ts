@@ -1,5 +1,6 @@
 import { Stats } from "@/utils/window";
-import { Queue } from "bullmq";
+import { Job, Queue } from "bullmq";
+import { ServerError, ClientError } from "./errors";
 
 export type QueueType = {
   stats: Stats; // stats class keeps track of provider health
@@ -19,6 +20,15 @@ export type EmailType = {
 
 export type JobType = {
   type: "sms" | "email";
-  provider: number;
+  providerIndex: number;
   payload: SMSType | EmailType;
+};
+
+export type JobFailHandlerArgs = {
+  error: ServerError | ClientError | Error;
+  job: Job<JobType>;
+  providerIndex: number;
+  queue: QueueType;
+  type: "sms" | "email";
+  payload: EmailType | SMSType;
 };
