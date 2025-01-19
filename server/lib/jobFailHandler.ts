@@ -1,8 +1,8 @@
 import { emailHandler } from "@/handlers/emailHandler";
 import { smsHandler } from "@/handlers/smsHandler";
-import { ServerError, ClientError } from "./errors";
-import { calculateDelay } from "./helpers";
-import { EmailType, SMSType, JobFailHandlerArgs } from "./types";
+import { ServerError, ClientError } from "../utils/errors";
+import { calculateDelay } from "../utils/helpers";
+import { EmailType, SMSType, JobFailHandlerArgs } from "../utils/types";
 
 export async function jobFailHandler(instructions: JobFailHandlerArgs) {
   const { error, job, providerIndex, queue, type, payload } = instructions;

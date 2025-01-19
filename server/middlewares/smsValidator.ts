@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, Response, NextFunction } from "express";
 
 const bangladeshiPhoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/;
 

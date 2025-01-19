@@ -9,14 +9,14 @@ import {
   WORKER_OPTIONS,
   WINDOW_SIZE,
 } from "@/utils/config";
-import { jobFailHandler } from "@/utils/jobFailHandler";
+import { jobFailHandler } from "@/lib/jobFailHandler";
 
 export const processor = async (job: Job<JobType>) => {
   const { type, providerIndex, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue =
     type === "email" ? emailQueues[providerIndex] : smsQueues[providerIndex];
-  const service =
+  const selectedProvider =
     type === "email"
       ? emailProviders[providerIndex]
       : smsProviders[providerIndex];
@@ -24,7 +24,7 @@ export const processor = async (job: Job<JobType>) => {
   console.log(`Worker pulled job ${job.id} from queue ${providerIndex}`);
   let successFlag: boolean;
   try {
-    successFlag = await service.send(payload);
+    successFlag = await selectedProvider.send(payload);
     if (successFlag) {
       console.log(
         `Worker successfully completed job ${job.id} in queue ${providerIndex}`

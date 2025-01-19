@@ -27,18 +27,26 @@ export class Provider {
   }
 
   async send(payload: SMSType | EmailType) {
-    const res = await fetch(this.url, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (res.ok) {
-      return true;
-    } else if (res.status === 500) {
-      throw new ServerError("Provider failed");
-    } else {
-      const responseText = await res.text();
-      throw new ClientError(`${res.status} ${res.statusText}`, responseText);
+    try {
+      const res = await fetch(this.url, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        return true;
+      } else if (res.status === 500) {
+        throw new ServerError("Provider failed");
+      } else {
+        const responseText = await res.text();
+        throw new ClientError(
+          `${res.status} ${res.statusText}`,
+          undefined,
+          responseText
+        );
+      }
+    } catch (error) {
+      throw new ServerError("Provider call failed");
     }
   }
 }
