@@ -38,7 +38,7 @@ export function selectProvider(
 
   const selectedProvider = shouldSelectUnhealthy
     ? unhealthyProviders[providerIndex]
-    : healthyProviders[providerIndex];
+    : healthyProviders[0];
 
   return selectedProvider.index;
 }
