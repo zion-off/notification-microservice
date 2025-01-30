@@ -12,7 +12,7 @@ import {
 import { jobFailHandler } from "@/lib/jobFailHandler";
 
 export const processor = async (job: Job<JobType>) => {
-  const { type, providerIndex, payload } = job.data;
+  const { type, providerIndex, history, payload } = job.data;
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue =
     type === "email" ? emailQueues[providerIndex] : smsQueues[providerIndex];
@@ -33,7 +33,15 @@ export const processor = async (job: Job<JobType>) => {
       queue.stats.logSuccess();
     }
   } catch (error) {
-    await jobFailHandler({ error, job, providerIndex, queue, type, payload });
+    await jobFailHandler({
+      error,
+      job,
+      history,
+      providerIndex,
+      queue,
+      type,
+      payload,
+    });
   } finally {
     emitStatsToSocket(queues, type, successFlag, payload);
   }

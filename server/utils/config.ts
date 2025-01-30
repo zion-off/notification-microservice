@@ -48,3 +48,9 @@ export const providers = ["provider-one", "provider-two", "provider-three"];
 // ports at which providers are running
 export const smsProviderPorts = [8071, 8072, 8073];
 export const emailProviderPorts = [8091, 8092, 8093];
+
+// enum for identifying type of request (email | sms)
+export enum MessageChannel {
+  "EMAIL",
+  "SMS",
+}

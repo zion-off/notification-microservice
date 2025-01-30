@@ -22,11 +22,13 @@ export type JobType = {
   type: "sms" | "email";
   providerIndex: number;
   payload: SMSType | EmailType;
+  history: Set<number>;
 };
 
 export type JobFailHandlerArgs = {
   error: ServerError | ClientError | Error;
   job: Job<JobType>;
+  history: Set<number>;
   providerIndex: number;
   queue: QueueType;
   type: "sms" | "email";

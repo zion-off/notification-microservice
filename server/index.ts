@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // middleware to handle errors thrown by request parser
-app.use(rateLimiter);
+// app.use(rateLimiter);
 
 // middleware to handle errors thrown by request parser
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

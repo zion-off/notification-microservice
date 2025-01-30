@@ -11,12 +11,11 @@ export const rateLimiter = async (
   // We need the IP address so we can rate limit clients individually
   const request_address = req.socket.remoteAddress.toString();
 
-  console.log("CLIENT ADDRESS:", request_address);
-
   if (process.env.RATE_LIMIT_ALGORITHM === "TOKEN_BUCKET") {
     try {
       // check if this user is new, if yes, create a bucket
       const addressExists = await redis.exists(request_address);
+
       if (!addressExists) {
         await redis.hSet(request_address, {
           tokens: process.env.BUCKET_SIZE,
@@ -39,6 +38,7 @@ export const rateLimiter = async (
       const available_tokens = Math.min(newTokens, bucket_size);
       const updated_tokens = available_tokens - 1;
 
+      // update redis
       await redis.hSet(request_address, {
         tokens: updated_tokens,
         timestamp: new Date().toISOString(),
@@ -50,7 +50,9 @@ export const rateLimiter = async (
           .set({ "X-Ratelimit-Remaining": Math.max(available_tokens, 0) })
           .end();
 
-        console.log("RATE LIMITED", request_address);
+        console.log("Rate limited client:", request_address);
+
+        return;
       }
     } catch (error) {
       console.error(`Error rate limiting: ${error}`);

@@ -1,10 +1,24 @@
 import { QueueType } from "@/utils/types";
 
-export function selectProvider(queues: QueueType[], exclude?: number): number {
-  // ascertain which providers are healthy and which are not
-  const providers = queues
-    .map((item, index) => ({ queue: item, index: index }))
-    .filter((item) => item.index != exclude);
+export function selectProvider(
+  queues: QueueType[],
+  history: Set<number>
+): number {
+
+  // round robin provider selection
+  const lastProvider = history.values().next().value;
+  history.delete(lastProvider);
+  history.add(lastProvider);
+
+  // sort providers based on priority
+  let providers = [];
+  for (const index of history.keys()) {
+    providers.push({
+      queue: queues[index],
+      index: index,
+    });
+  }
+
   const healthyProviders = providers.filter((item) => item.queue.stats.healthy);
   const unhealthyProviders = providers.filter(
     (item) => !item.queue.stats.healthy
