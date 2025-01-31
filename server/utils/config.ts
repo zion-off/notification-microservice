@@ -24,7 +24,7 @@ export const WORKER_OPTIONS: WorkerOptions = {
 
 export const JOB_OPTIONS: JobsOptions = {
   attempts: 3, // provider failures are handled by the handler, this is just to retry if queueing fails
-  removeOnComplete: true, // removes successful job from the queue
+  removeOnComplete: true,
   removeOnFail: true,
 };
 
@@ -49,3 +49,52 @@ export const providers = ["provider-one", "provider-two", "provider-three"];
 // ports at which providers are running
 export const smsProviderPorts = [8071, 8072, 8073];
 export const emailProviderPorts = [8091, 8092, 8093];
+
+// priority order for email and sms
+export let emailPriority = [
+  {
+    id: 1,
+    provider_type: "email",
+    provider_name: "Gmail",
+    provider_key: "goog",
+    priority: 1,
+  },
+  {
+    id: 2,
+    provider_type: "email",
+    provider_name: "Outlook",
+    provider_key: "msft",
+    priority: 2,
+  },
+  {
+    id: 3,
+    provider_type: "email",
+    provider_name: "Yahoo",
+    provider_key: "yhoo",
+    priority: 3,
+  },
+];
+
+export let smsPriority = [
+  {
+    id: 1,
+    provider_type: "sms",
+    provider_name: "GrameenPhone",
+    provider_key: "gp",
+    priority: 1,
+  },
+  {
+    id: 2,
+    provider_type: "sms",
+    provider_name: "BanglaLink",
+    provider_key: "bl",
+    priority: 2,
+  },
+  {
+    id: 3,
+    provider_type: "sms",
+    provider_name: "Robi",
+    provider_key: "robi",
+    priority: 3,
+  },
+];

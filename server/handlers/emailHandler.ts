@@ -3,7 +3,7 @@ import { JOB_OPTIONS } from "@/utils/config";
 import { emailQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
-import { emailPriority } from "@/utils/websocket";
+import { emailPriority } from "@/utils/config";
 
 async function getEmailProviderPriorities() {
   return [...emailPriority];

@@ -3,7 +3,7 @@ import { JOB_OPTIONS } from "@/utils/config";
 import { smsQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
-import { smsPriority } from "@/utils/websocket";
+import { smsPriority } from "@/utils/config";
 
 async function getSmsProviderPriorities() {
   return [...smsPriority];

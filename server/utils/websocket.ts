@@ -2,58 +2,11 @@ import { Server } from "socket.io";
 import http from "http";
 import { smsQueues, emailQueues } from "@/lib/broker";
 import { SMSType, EmailType } from "./types";
+import { emailPriority, smsPriority } from "./config";
+import priorityUpdater from "./priorityUpdater";
 
 export let UNHEALTHY_THRESHOLD = 0.7;
 export let HEALTHY_THRESHOLD = Math.round((UNHEALTHY_THRESHOLD / 3) * 10) / 10;
-
-// priority order for email and sms
-export let emailPriority = [
-  {
-    id: 1,
-    provider_type: "email",
-    provider_name: "Gmail",
-    provider_key: "goog",
-    priority: 1,
-  },
-  {
-    id: 2,
-    provider_type: "email",
-    provider_name: "Outlook",
-    provider_key: "msft",
-    priority: 2,
-  },
-  {
-    id: 3,
-    provider_type: "email",
-    provider_name: "Yahoo",
-    provider_key: "yhoo",
-    priority: 3,
-  },
-];
-
-export let smsPriority = [
-  {
-    id: 1,
-    provider_type: "sms",
-    provider_name: "GrameenPhone",
-    provider_key: "gp",
-    priority: 1,
-  },
-  {
-    id: 2,
-    provider_type: "sms",
-    provider_name: "BanglaLink",
-    provider_key: "bl",
-    priority: 2,
-  },
-  {
-    id: 3,
-    provider_type: "sms",
-    provider_name: "Robi",
-    provider_key: "robi",
-    priority: 3,
-  },
-];
 
 export const server = http.createServer();
 const io = new Server(server, {
@@ -79,27 +32,24 @@ io.on("connection", (socket) => {
   socket.on("smsPriority", updateSmsPriority);
 });
 
-export function updateEmailPriority(newPriorities) {
+export function updateEmailPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
 
-  emailPriority = parsed.emailProviders;
+  priorityUpdater(emailPriority, parsed.emailProviders);
 
   console.log("Updated email priority: ", emailPriority);
 }
 
-export function updateSmsPriority(newPriorities) {
+export function updateSmsPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
 
-  smsPriority = parsed.smsProviders;
+  priorityUpdater(smsPriority, parsed.smsProviders);
 
   console.log("Updated SMS priority: ", emailPriority);
 }
 
 export function emitInitialEmailList() {
-  io.emit(
-    "initialEmailProviderOrder",
-    JSON.stringify({ emailPriority })
-  );
+  io.emit("initialEmailProviderOrder", JSON.stringify({ emailPriority }));
 }
 
 export function emitInitialSmsList() {

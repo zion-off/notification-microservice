@@ -34,3 +34,11 @@ export type JobFailHandlerArgs = {
   type: "sms" | "email";
   payload: EmailType | SMSType;
 };
+
+export type Provider = {
+  id: number;
+  provider_type: string;
+  provider_name: string;
+  provider_key: string;
+  priority: number;
+};
