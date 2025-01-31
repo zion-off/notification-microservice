@@ -143,13 +143,13 @@ export default function Dashboard() {
     });
 
     socket.on("initialEmailProviderOrder", (message) => {
-      const { initialEmailPriority } = JSON.parse(message);
-      onInitialEmailList(initialEmailPriority);
+      const initialPriorities = JSON.parse(message);
+      onInitialEmailList(initialPriorities);
     });
 
     socket.on("initialSmsProviderOrder", (message) => {
-      const { initialSmsPriority } = JSON.parse(message);
-      onInitialSmsList(initialSmsPriority);
+      const initialPriorities = JSON.parse(message);
+      onInitialSmsList(initialPriorities);
     });
 
     return () => {
@@ -166,7 +166,8 @@ export default function Dashboard() {
       reordered[index].priority = index + 1;
     }
     setEmailProviders(reordered);
-    socket.emit("emailPriority", JSON.stringify({ emailProviders }));
+    socket.emit("emailPriority", JSON.stringify({ emailProviders: reordered }));
+    console.log(reordered);
   }
 
   function updateSmsProviders(newOrder: ProviderType[]) {
@@ -175,9 +176,8 @@ export default function Dashboard() {
       reordered[index] = provider;
       reordered[index].priority = index + 1;
     }
-
     setSmsProviders(reordered);
-    socket.emit("smsPriority", JSON.stringify({ smsProviders }));
+    socket.emit("smsPriority", JSON.stringify({ smsProviders: reordered }));
   }
 
   const emailIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -292,13 +292,6 @@ export default function Dashboard() {
                 }}
               />
 
-              {/* <p>Window size</p>
-              <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
-                <p>1000</p>
-              </div>
-              <Slider defaultValue={[100]} max={1000} step={1} disabled /> */}
-
               <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">
                 <p>0.1</p>
@@ -396,13 +389,6 @@ export default function Dashboard() {
                   setSmsRate(value[0]);
                 }}
               />
-
-              {/* <p>Window size</p>
-              <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
-                <p>1000</p>
-              </div>
-              <Slider defaultValue={[100]} max={1000} step={1} disabled /> */}
 
               <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">

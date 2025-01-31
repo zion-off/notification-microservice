@@ -2,8 +2,8 @@ import { QueueType } from "@/utils/types";
 
 export function selectProvider(
   queues: QueueType[],
-  history: Set<number>
-): number {
+  history: Set<string>
+): string {
   // round robin provider selection
   const lastProvider = history.values().next().value;
   history.delete(lastProvider);
@@ -11,17 +11,15 @@ export function selectProvider(
 
   // sort providers based on priority
   let providers = [];
-  for (const index of history.values()) {
-    providers.push({
-      queue: queues[index],
-      index: index,
-    });
+  for (const provider of history.values()) {
+    const queue = queues.find(
+      (queue) => queue.queue.name.split("-")[0] === provider.toLowerCase()
+    );
+    providers.push(queue);
   }
 
-  const healthyProviders = providers.filter((item) => item.queue.stats.healthy);
-  const unhealthyProviders = providers.filter(
-    (item) => !item.queue.stats.healthy
-  );
+  const healthyProviders = providers.filter((item) => item.stats.healthy);
+  const unhealthyProviders = providers.filter((item) => !item.stats.healthy);
 
   // requests are routed to unhealthy providers in two cases
   // if there are no healthy providers available
@@ -33,8 +31,8 @@ export function selectProvider(
 
   if (shouldSelectUnhealthy) {
     const providerIndex = Math.floor(Math.random() * unhealthyProviders.length);
-    return unhealthyProviders[providerIndex].index;
+    return unhealthyProviders[providerIndex].queue.name;
   }
 
-  return healthyProviders[0].index;
+  return healthyProviders[0].queue.name;
 }

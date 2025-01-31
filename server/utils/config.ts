@@ -19,7 +19,7 @@ export const WORKER_OPTIONS: WorkerOptions = {
     max: 1,
     duration: 1000,
   },
-  maxStalledCount: 3,
+  maxStalledCount: 5,
 };
 
 export const JOB_OPTIONS: JobsOptions = {

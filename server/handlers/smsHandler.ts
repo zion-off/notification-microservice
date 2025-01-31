@@ -10,48 +10,41 @@ function getSmsProviderPriorities() {
   return [...smsProviders];
 }
 
-export async function smsHandler(payload: SMSType, history?: Set<number>) {
+export async function smsHandler(payload: SMSType, history?: Set<string>) {
   // see if this job has a retry history
-  // if not, create a new history set
-  let priorityOrder: Set<number>;
+  // if not, initialize a set to record its history
+  let priorityOrder: Set<string>;
 
   if (!history) {
     const smsProviderPriorities = getSmsProviderPriorities();
-
-    console.log("SMS provider priorities:");
-    for (const provider of smsProviderPriorities) {
-      console.log(provider.provider_name);
-    }
 
     // rotate by +1
     const lastValue = smsProviderPriorities.pop();
     smsProviderPriorities.unshift(lastValue);
 
     priorityOrder = new Set(
-      smsProviderPriorities.map((provider) => provider.id - 1)
+      smsProviderPriorities.map((provider) => provider.provider_name)
     );
   }
 
   // select provider by passing in the relevant queues
-  const providerIndex = selectProvider(smsQueues, history || priorityOrder);
+  const providerName = selectProvider(smsQueues, history || priorityOrder);
   // prepare the job for the queue
   const job: JobType = {
     type: "sms",
-    providerIndex,
+    providerName,
     payload: payload,
-    history: history || priorityOrder,
+    history: Array.from(history || priorityOrder),
   };
 
   try {
-    const res = await smsQueues[providerIndex].queue.add(
-      `Send SMS`,
-      job,
-      JOB_OPTIONS
+    const selectedQueue = smsQueues.find(
+      (queue) => queue.queue.name === providerName.toLowerCase()
     );
-
+    const res = await selectedQueue.queue.add(`Send SMS`, job, JOB_OPTIONS);
     console.log(
       chalk.bgGrey.black("STATUS "),
-      `SMS-${res.id} routed to ${smsQueues[providerIndex].queue.name}`
+      `SMS-${res.id} routed to ${selectedQueue.queue.name}`
     );
   } catch (error) {
     throw new ServerError("Error enqueueing SMS");

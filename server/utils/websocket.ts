@@ -25,8 +25,8 @@ io.on("connection", (socket) => {
 
   socket.on("setup", emitEmailStats);
   socket.on("setup", emitSmsStats);
-  socket.on("setup", emitInitialEmailList);
-  socket.on("setup", emitInitialSmsList);
+  socket.on("setup", emitEmailList);
+  socket.on("setup", emitSmsList);
   socket.on("updateUnhealthyThreshold", updateHealthyThreshold);
   socket.on("emailPriority", updateEmailPriority);
   socket.on("smsPriority", updateSmsPriority);
@@ -34,32 +34,20 @@ io.on("connection", (socket) => {
 
 export function updateEmailPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
-
   priorityUpdater(emailProviders, parsed.emailProviders);
-
-  console.log("Updated email provider priorities:")
-  for (const provider of emailProviders) {
-    console.log(provider.provider_name);
-  }
 }
 
 export function updateSmsPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
-
   priorityUpdater(smsProviders, parsed.smsProviders);
-
-  console.log("Updated SMS provider priorities:");
-  for (const provider of smsProviders) {
-    console.log(provider.provider_name);
-  }
 }
 
-export function emitInitialEmailList() {
-  io.emit("initialEmailProviderOrder", JSON.stringify({ emailProviders }));
+export function emitEmailList() {
+  io.emit("initialEmailProviderOrder", JSON.stringify(emailProviders));
 }
 
-export function emitInitialSmsList() {
-  io.emit("initialSmsProviderOrder", JSON.stringify({ smsProviders }));
+export function emitSmsList() {
+  io.emit("initialSmsProviderOrder", JSON.stringify(smsProviders));
 }
 
 export function updateHealthyThreshold(size: number) {

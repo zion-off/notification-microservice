@@ -20,15 +20,15 @@ export type EmailType = {
 
 export type JobType = {
   type: "sms" | "email";
-  providerIndex: number;
+  providerName: string;
   payload: SMSType | EmailType;
-  history: Set<number>;
+  history: string[];
 };
 
 export type JobFailHandlerArgs = {
   error: ServerError | ClientError | Error;
   job: Job<JobType>;
-  history: Set<number>;
+  history: Set<string>;
   queue: QueueType;
   type: "sms" | "email";
   payload: EmailType | SMSType;

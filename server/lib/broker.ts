@@ -14,14 +14,27 @@ import {
 import { jobFailHandler } from "@/lib/jobFailHandler";
 
 export const processor = async (job: Job<JobType>) => {
-  const { type, providerIndex, history, payload } = job.data;
+  const { type, providerName, history, payload } = job.data;
+  const historySet = new Set(history);
   const queues = type === "email" ? emailQueues : smsQueues;
   const queue =
-    type === "email" ? emailQueues[providerIndex] : smsQueues[providerIndex];
+    type === "email"
+      ? emailQueues.find(
+          (item) => item.queue.name === providerName.toLowerCase()
+        )
+      : smsQueues.find(
+          (item) => item.queue.name === providerName.toLowerCase()
+        );
   const selectedProvider =
     type === "email"
-      ? emailProvidersArray[providerIndex]
-      : smsProvidersArray[providerIndex];
+      ? emailProvidersArray.find(
+          (provider) =>
+            provider.name === providerName.toLowerCase().split("-")[0]
+        )
+      : smsProvidersArray.find(
+          (provider) =>
+            provider.name === providerName.toLowerCase().split("-")[0]
+        );
 
   console.log(
     chalk.bgGrey.black("STATUS "),
@@ -44,7 +57,7 @@ export const processor = async (job: Job<JobType>) => {
     await jobFailHandler({
       error,
       job,
-      history,
+      history: historySet,
       queue,
       type,
       payload,

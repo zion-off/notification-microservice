@@ -1,3 +1,5 @@
+import { sentence, lorem } from "txtgen";
+
 export async function sendEmail() {
   try {
     const res = await fetch("http://localhost:3001/api/email", {
@@ -6,8 +8,8 @@ export async function sendEmail() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        subject: "Dummy email",
-        body: "Email body",
+        subject: lorem(2, 4),
+        body: sentence(),
         recipients: ["recipient@gmail.com", "recipient@yahoo.com"],
       }),
     });
@@ -28,9 +30,9 @@ export async function sendSMS() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        "phone": "+8801712345678",
-        "text": "Dummy text"
-    }),
+        phone: "+8801712345678",
+        text: sentence(),
+      }),
     });
 
     if (!res.ok) {

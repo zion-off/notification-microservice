@@ -5,4 +5,8 @@ export default function priorityUpdater(
   newPriorities: Provider[]
 ) {
   listToUpdate = [...newPriorities];
+  console.log("######## UPDATED #######");
+  for (const provider of listToUpdate) {
+    console.log(provider.provider_name);
+  }
 }

@@ -22,9 +22,12 @@ export async function jobFailHandler(instructions: JobFailHandlerArgs) {
       const lastProvider = history.values().next().value;
       history.delete(lastProvider);
       history.add(lastProvider);
-      type === "email"
-        ? await emailHandler(payload as EmailType, history)
-        : await smsHandler(payload as SMSType, history);
+
+      if (type === "email") {
+        await emailHandler(payload as EmailType, history);
+      } else if (type === "sms") {
+        await smsHandler(payload as SMSType, history);
+      }
       // put queue to sleep and increase delay
       await queue.queue.pause();
       setTimeout(async () => {
@@ -36,12 +39,16 @@ export async function jobFailHandler(instructions: JobFailHandlerArgs) {
   } else if (error instanceof ClientError) {
     console.log(
       chalk.bgRed.black("ERROR  "),
-      `Job ${job.id} failed, ${error.message}, ${error.details}`
+      `${type.toUpperCase()}-${job.id} failed to send, ${error.message}, ${
+        error.details
+      }`
     );
   } else {
     console.log(
       chalk.bgRed.black("ERROR  "),
-      `Unexpected error during job ${job.id}: ${error}`
+      `Unexpected error occuring when sending ${type.toUpperCase()}-${
+        job.id
+      }: ${error}`
     );
   }
 }

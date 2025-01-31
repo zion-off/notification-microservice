@@ -10,49 +10,41 @@ function getEmailProviderPriorities() {
   return [...emailProviders];
 }
 
-export async function emailHandler(payload: EmailType, history?: Set<number>) {
+export async function emailHandler(payload: EmailType, history?: Set<string>) {
   // see if this job has a request history
-  // if not, create a new history set
-  let priorityOrder: Set<number>;
+  // if not, initialize a set to record its history
+  let priorityOrder: Set<string>;
 
   if (!history) {
     const emailProviderPriorities = getEmailProviderPriorities();
-
-    console.log("Email provider priorities:");
-    for (const provider of emailProviderPriorities) {
-      console.log(provider.provider_name);
-    }
 
     // rotate by +1
     const lastValue = emailProviderPriorities.pop();
     emailProviderPriorities.unshift(lastValue);
 
     priorityOrder = new Set(
-      emailProviderPriorities.map((provider) => provider.id - 1)
+      emailProviderPriorities.map((provider) => provider.provider_name)
     );
   }
 
   // select provider by passing in the relevant queues
-  const providerIndex = selectProvider(emailQueues, history || priorityOrder);
-
+  const providerName = selectProvider(emailQueues, history || priorityOrder);
   // prepare the job for the queue
   const job: JobType = {
     type: "email",
-    providerIndex,
+    providerName,
     payload: payload,
-    history: history || priorityOrder,
+    history: Array.from(history || priorityOrder),
   };
 
   try {
-    const res = await emailQueues[providerIndex].queue.add(
-      `Send email`,
-      job,
-      JOB_OPTIONS
+    const selectedQueue = emailQueues.find(
+      (queue) => queue.queue.name === providerName.toLowerCase()
     );
-
+    const res = await selectedQueue.queue.add(`Send email`, job, JOB_OPTIONS);
     console.log(
       chalk.bgGrey.black("STATUS "),
-      `EMAIL-${res.id} routed to ${emailQueues[providerIndex].queue.name}`
+      `EMAIL-${res.id} routed to ${selectedQueue.queue.name}`
     );
   } catch (error) {
     throw new ServerError("Error enqueueing email");
