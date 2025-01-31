@@ -3,31 +3,10 @@ import { JOB_OPTIONS } from "@/utils/config";
 import { smsQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
+import { smsPriority } from "@/utils/websocket";
 
 async function getSmsProviderPriorities() {
-  return [
-    {
-      id: 1,
-      provider_type: "sms",
-      provider_name: "GrameenPhone",
-      provider_key: "gp",
-      priority: 2,
-    },
-    {
-      id: 2,
-      provider_type: "sms",
-      provider_name: "BanglaLink",
-      provider_key: "bl",
-      priority: 1,
-    },
-    {
-      id: 3,
-      provider_type: "sms",
-      provider_name: "Robi",
-      provider_key: "robi",
-      priority: 3,
-    },
-  ];
+  return [...smsPriority];
 }
 
 export async function smsHandler(payload: SMSType, history?: Set<number>) {
@@ -37,12 +16,13 @@ export async function smsHandler(payload: SMSType, history?: Set<number>) {
 
   if (!history) {
     const smsProviderPriorities = await getSmsProviderPriorities();
+
     // rotate by +1
     const lastValue = smsProviderPriorities.pop();
     smsProviderPriorities.unshift(lastValue);
 
     priorityOrder = new Set(
-      smsProviderPriorities.map((provider) => provider.priority)
+      smsProviderPriorities.map((provider) => provider.id - 1)
     );
   }
 

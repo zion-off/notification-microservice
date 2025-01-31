@@ -5,13 +5,18 @@ import { calculateDelay } from "../utils/helpers";
 import { EmailType, SMSType, JobFailHandlerArgs } from "../utils/types";
 
 export async function jobFailHandler(instructions: JobFailHandlerArgs) {
-  const { error, job, history, providerIndex, queue, type, payload } = instructions;
+  const { error, job, history, providerIndex, queue, type, payload } =
+    instructions;
   if (error instanceof ServerError) {
     console.log(`Worker failed to do job ${job.id} in queue ${providerIndex}`);
     // log failure
     queue.stats.logFail();
     // send the job back for retrying and exclude this provider
     try {
+      // round robin provider selection
+      const lastProvider = history.values().next().value;
+      history.delete(lastProvider);
+      history.add(lastProvider);
       type === "email"
         ? await emailHandler(payload as EmailType, history)
         : await smsHandler(payload as SMSType, history);

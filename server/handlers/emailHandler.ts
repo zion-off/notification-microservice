@@ -3,31 +3,10 @@ import { JOB_OPTIONS } from "@/utils/config";
 import { emailQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
+import { emailPriority } from "@/utils/websocket";
 
 async function getEmailProviderPriorities() {
-  return [
-    {
-      id: 1,
-      provider_type: "email",
-      provider_name: "Gmail",
-      provider_key: "goog",
-      priority: 2,
-    },
-    {
-      id: 2,
-      provider_type: "email",
-      provider_name: "Outlook",
-      provider_key: "msft",
-      priority: 1,
-    },
-    {
-      id: 3,
-      provider_type: "email",
-      provider_name: "Yahoo",
-      provider_key: "yhoo",
-      priority: 3,
-    },
-  ];
+  return [...emailPriority];
 }
 
 export async function emailHandler(payload: EmailType, history?: Set<number>) {
@@ -37,13 +16,16 @@ export async function emailHandler(payload: EmailType, history?: Set<number>) {
 
   if (!history) {
     const emailProviderPriorities = await getEmailProviderPriorities();
+
     // rotate by +1
     const lastValue = emailProviderPriorities.pop();
     emailProviderPriorities.unshift(lastValue);
 
     priorityOrder = new Set(
-      emailProviderPriorities.map((provider) => provider.priority - 1)
+      emailProviderPriorities.map((provider) => provider.id - 1)
     );
+
+    console.log(priorityOrder);
   }
 
   // select provider by passing in the relevant queues

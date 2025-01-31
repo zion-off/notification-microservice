@@ -4,7 +4,6 @@ export function selectProvider(
   queues: QueueType[],
   history: Set<number>
 ): number {
-
   // round robin provider selection
   const lastProvider = history.values().next().value;
   history.delete(lastProvider);
@@ -12,7 +11,7 @@ export function selectProvider(
 
   // sort providers based on priority
   let providers = [];
-  for (const index of history.keys()) {
+  for (const index of history.values()) {
     providers.push({
       queue: queues[index],
       index: index,
@@ -32,13 +31,10 @@ export function selectProvider(
     healthyProviders.length === 0 ||
     (unhealthyProviders.length > 0 && Math.random() > 0.5);
 
-  const providerIndex = shouldSelectUnhealthy
-    ? Math.floor(Math.random() * unhealthyProviders.length)
-    : Math.floor(Math.random() * healthyProviders.length);
+  if (shouldSelectUnhealthy) {
+    const providerIndex = Math.floor(Math.random() * unhealthyProviders.length);
+    return unhealthyProviders[providerIndex].index;
+  }
 
-  const selectedProvider = shouldSelectUnhealthy
-    ? unhealthyProviders[providerIndex]
-    : healthyProviders[0];
-
-  return selectedProvider.index;
+  return healthyProviders[0].index;
 }

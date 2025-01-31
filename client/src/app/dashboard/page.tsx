@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Provider } from "react";
 import { useRouter } from "next/navigation";
+import { Reorder } from "motion/react";
 import { socket } from "@/websocket";
 import Chart from "@/components/chart";
 import { Slider } from "@/components/ui/slider";
@@ -15,6 +16,14 @@ import {
 } from "@/components/ui/card";
 import { sendEmail, sendSMS } from "@/utils/requests";
 import { SMSType, EmailType } from "@/utils/types";
+
+type ProviderType = {
+  id: number;
+  provider_type: string;
+  provider_name: string;
+  provider_key: string;
+  priority: number;
+};
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,6 +42,8 @@ export default function Dashboard() {
   const [smsResults, setSmsResults] = useState<
     { success: boolean; phone: string; text: string }[]
   >([]);
+  const [emailProviders, setEmailProviders] = useState<ProviderType[]>([]);
+  const [smsProviders, setSmsProviders] = useState<ProviderType[]>([]);
 
   const emailContainerRef = useRef<HTMLDivElement | null>(null);
   const smsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +111,14 @@ export default function Dashboard() {
     }
   }
 
+  function onInitialEmailList(providers: ProviderType[]) {
+    setEmailProviders(providers);
+  }
+
+  function onInitialSmsList(providers: ProviderType[]) {
+    setSmsProviders(providers);
+  }
+
   useEffect(() => {
     if (!socket.connected) {
       router.push("/");
@@ -110,6 +129,8 @@ export default function Dashboard() {
     socket.on("smsStats", onSmsStats);
     socket.on("queueSize", updateQueueSizes);
     socket.emit("setup");
+
+    // Receiving smsResult
     socket.on("smsResult", (message) => {
       const { success, payload } = JSON.parse(message);
       onSmsResult(payload, success);
@@ -121,12 +142,44 @@ export default function Dashboard() {
       onEmailResult(payload, success);
     });
 
+    socket.on("initialEmailProviderOrder", (message) => {
+      const { initialEmailPriority } = JSON.parse(message);
+      onInitialEmailList(initialEmailPriority);
+    });
+
+    socket.on("initialSmsProviderOrder", (message) => {
+      const { initialSmsPriority } = JSON.parse(message);
+      onInitialSmsList(initialSmsPriority);
+    });
+
     return () => {
       socket.off("emailStats", onEmailStats);
       socket.off("smsStats", onSmsStats);
       socket.off("queueSize", updateQueueSizes);
     };
   }, []);
+
+  function updateEmailProviders(newOrder: ProviderType[]) {
+    const reordered = [];
+    for (const [index, provider] of newOrder.entries()) {
+      reordered[index] = provider;
+      reordered[index].priority = index + 1;
+    }
+
+    setEmailProviders(reordered);
+    socket.emit("emailPriority", JSON.stringify({ emailProviders }));
+  }
+
+  function updateSmsProviders(newOrder: ProviderType[]) {
+    const reordered = [];
+    for (const [index, provider] of newOrder.entries()) {
+      reordered[index] = provider;
+      reordered[index].priority = index + 1;
+    }
+
+    setSmsProviders(reordered);
+    socket.emit("smsPriority", JSON.stringify({ smsProviders }));
+  }
 
   const emailIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const smsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -240,16 +293,16 @@ export default function Dashboard() {
                 }}
               />
 
-              <p>Window size</p>
+              {/* <p>Window size</p>
               <div className="flex w-full justify-between text-xxs font-mono">
                 <p>0</p>
                 <p>1000</p>
               </div>
-              <Slider defaultValue={[100]} max={1000} step={1} disabled />
+              <Slider defaultValue={[100]} max={1000} step={1} disabled /> */}
 
               <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
+                <p>0.1</p>
                 <p>0.9</p>
               </div>
               <Slider
@@ -262,6 +315,21 @@ export default function Dashboard() {
                   setUnhealthyThreshold(value[0]);
                 }}
               />
+              <Reorder.Group
+                axis="y"
+                values={emailProviders}
+                onReorder={updateEmailProviders}
+              >
+                <div className="flex flex-col h-full gap-2 py-2 justify-between">
+                  {emailProviders.map((item) => (
+                    <Reorder.Item key={item.id} value={item}>
+                      <div className=" shadow-sm cursor-move rounded-sm p-2 bg-neutral-100">
+                        <span>{item.provider_name}</span>
+                      </div>
+                    </Reorder.Item>
+                  ))}
+                </div>
+              </Reorder.Group>
             </div>
           </CardContent>
         </Card>
@@ -330,16 +398,16 @@ export default function Dashboard() {
                 }}
               />
 
-              <p>Window size</p>
+              {/* <p>Window size</p>
               <div className="flex w-full justify-between text-xxs font-mono">
                 <p>0</p>
                 <p>1000</p>
               </div>
-              <Slider defaultValue={[100]} max={1000} step={1} disabled />
+              <Slider defaultValue={[100]} max={1000} step={1} disabled /> */}
 
               <p>Healthy threshold</p>
               <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
+                <p>0.1</p>
                 <p>0.9</p>
               </div>
               <Slider
@@ -352,6 +420,22 @@ export default function Dashboard() {
                   setUnhealthyThreshold(value[0]);
                 }}
               />
+
+              <Reorder.Group
+                axis="y"
+                values={smsProviders}
+                onReorder={updateSmsProviders}
+              >
+                <div className="flex flex-col h-full gap-2 py-2 justify-between">
+                  {smsProviders.map((item) => (
+                    <Reorder.Item key={item.id} value={item}>
+                      <div className=" shadow-sm cursor-move rounded-sm p-2 bg-neutral-100">
+                        <span>{item.provider_name}</span>
+                      </div>
+                    </Reorder.Item>
+                  ))}
+                </div>
+              </Reorder.Group>
             </div>
           </CardContent>
         </Card>
