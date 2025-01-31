@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import http from "http";
 import { smsQueues, emailQueues } from "@/lib/broker";
 import { SMSType, EmailType } from "./types";
-import { emailPriority, smsPriority } from "./config";
+import { emailProviders, smsProviders } from "./config";
 import priorityUpdater from "./priorityUpdater";
 
 export let UNHEALTHY_THRESHOLD = 0.7;
@@ -35,25 +35,31 @@ io.on("connection", (socket) => {
 export function updateEmailPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
 
-  priorityUpdater(emailPriority, parsed.emailProviders);
+  priorityUpdater(emailProviders, parsed.emailProviders);
 
-  console.log("Updated email priority: ", emailPriority);
+  console.log("Updated email provider priorities:")
+  for (const provider of emailProviders) {
+    console.log(provider.provider_name);
+  }
 }
 
 export function updateSmsPriority(newPriorities: string) {
   const parsed = JSON.parse(newPriorities);
 
-  priorityUpdater(smsPriority, parsed.smsProviders);
+  priorityUpdater(smsProviders, parsed.smsProviders);
 
-  console.log("Updated SMS priority: ", emailPriority);
+  console.log("Updated SMS provider priorities:");
+  for (const provider of smsProviders) {
+    console.log(provider.provider_name);
+  }
 }
 
 export function emitInitialEmailList() {
-  io.emit("initialEmailProviderOrder", JSON.stringify({ emailPriority }));
+  io.emit("initialEmailProviderOrder", JSON.stringify({ emailProviders }));
 }
 
 export function emitInitialSmsList() {
-  io.emit("initialSmsProviderOrder", JSON.stringify({ smsPriority }));
+  io.emit("initialSmsProviderOrder", JSON.stringify({ smsProviders }));
 }
 
 export function updateHealthyThreshold(size: number) {

@@ -5,9 +5,11 @@ import { SMSType, EmailType } from "./types";
 export class Provider {
   type: "sms" | "email";
   provider: number;
+  name: string;
   url: string;
 
-  private constructor(type: "sms" | "email", provider: number) {
+  private constructor(type: "sms" | "email", provider: number, name: string) {
+    this.name = name;
     this.url = Provider.constructURL(type, provider);
   }
 
@@ -22,8 +24,8 @@ export class Provider {
     return url;
   }
 
-  static createProvider(type: "sms" | "email", provider: number): Provider {
-    return new Provider(type, provider);
+  static createProvider(type: "sms" | "email", provider: number, name: string): Provider {
+    return new Provider(type, provider, name);
   }
 
   async send(payload: SMSType | EmailType) {

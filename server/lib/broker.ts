@@ -1,10 +1,12 @@
+import chalk from "chalk";
 import { Job, Queue, Worker } from "bullmq";
 import { QueueType, JobType } from "../utils/types";
 import { Stats } from "@/utils/window";
 import { emit as emitStatsToSocket } from "@/utils/helpers";
 import { Provider } from "@/utils/provider";
 import {
-  providers,
+  emailProviders,
+  smsProviders,
   QUEUE_OPTIONS,
   WORKER_OPTIONS,
   WINDOW_SIZE,
@@ -18,16 +20,22 @@ export const processor = async (job: Job<JobType>) => {
     type === "email" ? emailQueues[providerIndex] : smsQueues[providerIndex];
   const selectedProvider =
     type === "email"
-      ? emailProviders[providerIndex]
-      : smsProviders[providerIndex];
+      ? emailProvidersArray[providerIndex]
+      : smsProvidersArray[providerIndex];
 
-  console.log(`Worker pulled job ${job.id} from queue ${providerIndex}`);
+  console.log(
+    chalk.bgGrey.black("STATUS "),
+    `Worker pulled ${type.toUpperCase()}-${job.id} from ${queue.queue.name}`
+  );
   let successFlag: boolean;
   try {
     successFlag = await selectedProvider.send(payload);
     if (successFlag) {
       console.log(
-        `Worker successfully completed job ${job.id} in queue ${providerIndex}`
+        chalk.black.bgGreen("SUCCESS"),
+        `Worker successfully sent ${type.toUpperCase()}-${job.id} from ${
+          queue.queue.name
+        }`
       );
       // log success
       queue.stats.logSuccess();
@@ -37,7 +45,6 @@ export const processor = async (job: Job<JobType>) => {
       error,
       job,
       history,
-      providerIndex,
       queue,
       type,
       payload,
@@ -52,17 +59,19 @@ export const processor = async (job: Job<JobType>) => {
 // based on last WINDOW_SIZE requests
 // Queue is the actual bullmq Queue instance
 // constructor takes in the name of the Queue and some options
-export const smsQueues: QueueType[] = providers.map((provider) => {
+export const smsQueues: QueueType[] = smsProviders.map((provider) => {
+  const { provider_name } = provider;
   return {
     stats: new Stats(WINDOW_SIZE),
-    queue: new Queue(`sms-${provider}`, QUEUE_OPTIONS),
+    queue: new Queue(`${provider_name.toLowerCase()}-queue`, QUEUE_OPTIONS),
   };
 });
 
-export const emailQueues: QueueType[] = providers.map((provider) => {
+export const emailQueues: QueueType[] = emailProviders.map((provider) => {
+  const { provider_name } = provider;
   return {
     stats: new Stats(WINDOW_SIZE),
-    queue: new Queue(`email-${provider}`, QUEUE_OPTIONS),
+    queue: new Queue(`${provider_name.toLowerCase()}-queue`, QUEUE_OPTIONS),
   };
 });
 
@@ -71,19 +80,31 @@ export const emailQueues: QueueType[] = providers.map((provider) => {
 // i) queue name (1-1 mapping of queue and worker),
 // ii) a callback that tells the worker what to do
 // iii) some additional options
-const smsWorkers = providers.map((provider) => {
-  return new Worker(`email-${provider}`, processor, WORKER_OPTIONS);
+const smsWorkers = smsProviders.map((provider) => {
+  const { provider_name } = provider;
+  return new Worker(
+    `${provider_name.toLowerCase()}-queue`,
+    processor,
+    WORKER_OPTIONS
+  );
 });
 
-const emailWorkers = providers.map((provider) => {
-  return new Worker(`sms-${provider}`, processor, WORKER_OPTIONS);
+const emailWorkers = emailProviders.map((provider) => {
+  const { provider_name } = provider;
+  return new Worker(
+    `${provider_name.toLowerCase()}-queue`,
+    processor,
+    WORKER_OPTIONS
+  );
 });
 
 // providers
-const smsProviders = providers.map((_, index) => {
-  return Provider.createProvider("sms", index);
+const smsProvidersArray = smsProviders.map((item, index) => {
+  const { provider_name } = item;
+  return Provider.createProvider("sms", index, provider_name.toLowerCase());
 });
 
-const emailProviders = providers.map((_, index) => {
-  return Provider.createProvider("email", index);
+const emailProvidersArray = emailProviders.map((item, index) => {
+  const { provider_name } = item;
+  return Provider.createProvider("email", index, provider_name.toLowerCase());
 });

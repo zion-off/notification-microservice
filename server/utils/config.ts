@@ -51,7 +51,7 @@ export const smsProviderPorts = [8071, 8072, 8073];
 export const emailProviderPorts = [8091, 8092, 8093];
 
 // priority order for email and sms
-export let emailPriority = [
+export let emailProviders = [
   {
     id: 1,
     provider_type: "email",
@@ -75,7 +75,7 @@ export let emailPriority = [
   },
 ];
 
-export let smsPriority = [
+export let smsProviders = [
   {
     id: 1,
     provider_type: "sms",

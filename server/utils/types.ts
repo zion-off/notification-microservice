@@ -29,7 +29,6 @@ export type JobFailHandlerArgs = {
   error: ServerError | ClientError | Error;
   job: Job<JobType>;
   history: Set<number>;
-  providerIndex: number;
   queue: QueueType;
   type: "sms" | "email";
   payload: EmailType | SMSType;

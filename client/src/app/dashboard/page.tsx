@@ -165,7 +165,6 @@ export default function Dashboard() {
       reordered[index] = provider;
       reordered[index].priority = index + 1;
     }
-
     setEmailProviders(reordered);
     socket.emit("emailPriority", JSON.stringify({ emailProviders }));
   }

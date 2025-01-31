@@ -1,12 +1,13 @@
+import chalk from "chalk";
 import { JobType, SMSType } from "@/utils/types";
 import { JOB_OPTIONS } from "@/utils/config";
 import { smsQueues } from "@/lib/broker";
 import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
-import { smsPriority } from "@/utils/config";
+import { smsProviders } from "@/utils/config";
 
 function getSmsProviderPriorities() {
-  return [...smsPriority];
+  return [...smsProviders];
 }
 
 export async function smsHandler(payload: SMSType, history?: Set<number>) {
@@ -16,6 +17,11 @@ export async function smsHandler(payload: SMSType, history?: Set<number>) {
 
   if (!history) {
     const smsProviderPriorities = getSmsProviderPriorities();
+
+    console.log("SMS provider priorities:");
+    for (const provider of smsProviderPriorities) {
+      console.log(provider.provider_name);
+    }
 
     // rotate by +1
     const lastValue = smsProviderPriorities.pop();
@@ -43,7 +49,10 @@ export async function smsHandler(payload: SMSType, history?: Set<number>) {
       JOB_OPTIONS
     );
 
-    console.log(`Job ${res.id} sent to provider ${providerIndex}`);
+    console.log(
+      chalk.bgGrey.black("STATUS "),
+      `SMS-${res.id} routed to ${smsQueues[providerIndex].queue.name}`
+    );
   } catch (error) {
     throw new ServerError("Error enqueueing SMS");
   }
