@@ -5,7 +5,7 @@ import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
 import { emailPriority } from "@/utils/config";
 
-async function getEmailProviderPriorities() {
+function getEmailProviderPriorities() {
   return [...emailPriority];
 }
 
@@ -15,7 +15,7 @@ export async function emailHandler(payload: EmailType, history?: Set<number>) {
   let priorityOrder: Set<number>;
 
   if (!history) {
-    const emailProviderPriorities = await getEmailProviderPriorities();
+    const emailProviderPriorities = getEmailProviderPriorities();
 
     // rotate by +1
     const lastValue = emailProviderPriorities.pop();

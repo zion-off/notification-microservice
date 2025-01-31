@@ -5,7 +5,7 @@ import { selectProvider } from "@/utils/providerSelector";
 import { ServerError } from "@/utils/errors";
 import { smsPriority } from "@/utils/config";
 
-async function getSmsProviderPriorities() {
+function getSmsProviderPriorities() {
   return [...smsPriority];
 }
 
@@ -15,7 +15,7 @@ export async function smsHandler(payload: SMSType, history?: Set<number>) {
   let priorityOrder: Set<number>;
 
   if (!history) {
-    const smsProviderPriorities = await getSmsProviderPriorities();
+    const smsProviderPriorities = getSmsProviderPriorities();
 
     // rotate by +1
     const lastValue = smsProviderPriorities.pop();
