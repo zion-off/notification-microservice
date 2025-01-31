@@ -5,9 +5,9 @@ export function selectProvider(
   history: Set<string>
 ): string {
   // round robin provider selection
-  const lastProvider = history.values().next().value;
-  history.delete(lastProvider);
-  history.add(lastProvider);
+  const firstItem = history.values().next().value;
+  history.delete(firstItem);
+  history.add(firstItem);
 
   // sort providers based on priority
   let providers = [];

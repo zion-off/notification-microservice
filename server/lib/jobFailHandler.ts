@@ -18,11 +18,6 @@ export async function jobFailHandler(instructions: JobFailHandlerArgs) {
     queue.stats.logFail();
     // send the job back for retrying and exclude this provider
     try {
-      // round robin provider selection
-      const lastProvider = history.values().next().value;
-      history.delete(lastProvider);
-      history.add(lastProvider);
-
       if (type === "email") {
         await emailHandler(payload as EmailType, history);
       } else if (type === "sms") {

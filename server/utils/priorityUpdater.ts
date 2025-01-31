@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 import { Provider } from "./types";
 
 export default function priorityUpdater(
@@ -5,8 +7,11 @@ export default function priorityUpdater(
   newPriorities: Provider[]
 ) {
   listToUpdate = [...newPriorities];
-  console.log("######## UPDATED #######");
-  for (const provider of listToUpdate) {
-    console.log(provider.provider_name);
+  for (const [index, provider] of listToUpdate.entries()) {
+    console.log(
+      chalk.bgYellowBright.black(`UPDATE:`),
+      `PRIORITY-${index}`,
+      provider.provider_name
+    );
   }
 }
