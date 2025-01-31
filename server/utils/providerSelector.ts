@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 import { QueueType } from "@/utils/types";
 
 export function selectProvider(
@@ -31,6 +33,7 @@ export function selectProvider(
 
   if (shouldSelectUnhealthy) {
     const providerIndex = Math.floor(Math.random() * unhealthyProviders.length);
+    console.log(chalk.bgBlue.black("INFO   "), "Selected unhealthy provider");
     return unhealthyProviders[providerIndex].queue.name;
   }
 

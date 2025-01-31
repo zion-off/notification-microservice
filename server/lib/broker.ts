@@ -36,10 +36,10 @@ export const processor = async (job: Job<JobType>) => {
             provider.name === providerName.toLowerCase().split("-")[0]
         );
 
-  console.log(
-    chalk.bgGrey.black("STATUS "),
-    `Worker pulled ${type.toUpperCase()}-${job.id} from ${queue.queue.name}`
-  );
+  // console.log(
+  //   chalk.bgGrey.black("STATUS "),
+  //   `Worker pulled ${type.toUpperCase()}-${job.id} from ${queue.queue.name}`
+  // );
   let successFlag: boolean;
   try {
     successFlag = await selectedProvider.send(payload);
