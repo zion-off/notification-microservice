@@ -2,7 +2,6 @@ import { Server } from "socket.io";
 import http from "http";
 import { smsQueues, emailQueues } from "@/lib/broker";
 import { SMSType, EmailType } from "./types";
-import { initialEmailPriority, initialSmsPriority } from "./config";
 
 export let UNHEALTHY_THRESHOLD = 0.7;
 export let HEALTHY_THRESHOLD = Math.round((UNHEALTHY_THRESHOLD / 3) * 10) / 10;
@@ -99,12 +98,12 @@ export function updateSmsPriority(newPriorities) {
 export function emitInitialEmailList() {
   io.emit(
     "initialEmailProviderOrder",
-    JSON.stringify({ initialEmailPriority })
+    JSON.stringify({ emailPriority })
   );
 }
 
 export function emitInitialSmsList() {
-  io.emit("initialSmsProviderOrder", JSON.stringify({ initialSmsPriority }));
+  io.emit("initialSmsProviderOrder", JSON.stringify({ smsPriority }));
 }
 
 export function updateHealthyThreshold(size: number) {
