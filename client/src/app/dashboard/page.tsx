@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Send } from "lucide-react";
 import { Reorder } from "motion/react";
 import { socket } from "@/websocket";
 import Chart from "@/components/chart";
@@ -14,6 +15,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { sendEmail, sendSMS } from "@/utils/requests";
 import { SMSType, EmailType } from "@/utils/types";
 
@@ -272,12 +274,18 @@ export default function Dashboard() {
 
         <Card className="w-1/3">
           <CardHeader>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <CardTitle>Test Email Providers</CardTitle>
-              <Switch
-                checked={sendingEmails}
-                onCheckedChange={setSendingEmails}
-              />
+              <div className="flex gap-2 items-center">
+                <Send
+                  onClick={sendEmail}
+                  className="cursor-pointer rounded-sm bg-input p-1 size-5 cursor-pointer rounded-sm bg-input p-1 size-5 fill-neutral-400 stroke-neutral-400 hover:bg-neutral-300 hover:stroke-neutral-500 hover:fill-neutral-500"
+                />
+                <Switch
+                  checked={sendingEmails}
+                  onCheckedChange={setSendingEmails}
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-xs">
@@ -375,9 +383,16 @@ export default function Dashboard() {
 
         <Card className="w-1/3">
           <CardHeader>
-            <div className="flex justify-between">
-              <CardTitle>Test Email Providers</CardTitle>
-              <Switch checked={sendingSms} onCheckedChange={setSendingSms} />
+            <div className="flex justify-between items-center">
+              <CardTitle>Test SMS Providers</CardTitle>
+
+              <div className="flex gap-2 items-center">
+                <Send
+                  onClick={sendSMS}
+                  className="cursor-pointer rounded-sm bg-input p-1 size-5 fill-neutral-400 stroke-neutral-400 hover:bg-neutral-300 hover:stroke-neutral-500 hover:fill-neutral-500"
+                />
+                <Switch checked={sendingSms} onCheckedChange={setSendingSms} />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
