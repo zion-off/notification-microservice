@@ -255,14 +255,14 @@ export default function Dashboard() {
           <CardFooter className="text-xxs font-mono">
             <div
               ref={emailContainerRef}
-              className="bg-gray-300 text-gray-700  w-full h-8 overflow-scroll"
+              className="bg-gray-300 text-gray-700  w-full h-8 overflow-scroll rounded-sm"
             >
               {emailResults.map((res, index) => {
                 const { success, subject } = res;
                 return (
                   <p
                     key={index}
-                    className={success ? `bg-green-200` : `bg-red-200`}
+                    className={success ? `bg-green-200 p-1` : `bg-red-200 p-1`}
                   >
                     {`${success ? "Sent" : "Failed to send"} email ${subject}`}
                   </p>
@@ -279,7 +279,7 @@ export default function Dashboard() {
               <div className="flex gap-2 items-center">
                 <Send
                   onClick={sendEmail}
-                  className="cursor-pointer rounded-sm bg-input p-1 size-5 cursor-pointer rounded-sm bg-input p-1 size-5 fill-neutral-400 stroke-neutral-400 hover:bg-neutral-300 hover:stroke-neutral-500 hover:fill-neutral-500"
+                  className="cursor-pointer rounded-sm bg-input p-1 size-5 fill-neutral-400 stroke-neutral-400 hover:bg-neutral-300 hover:stroke-neutral-500 hover:fill-neutral-500"
                 />
                 <Switch
                   checked={sendingEmails}
@@ -364,14 +364,14 @@ export default function Dashboard() {
           <CardFooter className="text-xxs font-mono">
             <div
               ref={smsContainerRef}
-              className="bg-gray-300 text-gray-700 w-full h-8 overflow-scroll"
+              className="bg-gray-300 text-gray-700 w-full h-8 overflow-scroll rounded-sm"
             >
               {smsResults.map((res, index) => {
                 const { success, phone, text } = res;
                 return (
                   <p
                     key={index}
-                    className={success ? `bg-green-200` : `bg-red-200`}
+                    className={success ? `bg-green-200 p-1` : `bg-red-200 p-1`}
                   >
                     {`${success ? "Sent" : "Failed to send"} SMS to ${phone}`}
                   </p>
