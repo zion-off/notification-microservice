@@ -1,8 +1,10 @@
 export default function Chart({
+  name,
   window,
   healthy,
   size,
 }: {
+  name: string;
   window: number[];
   healthy: boolean;
   size: number;
@@ -37,7 +39,9 @@ export default function Chart({
           </div>
           <p>{healthy ? "Healthy" : "Unhealthy"}</p>
         </span>
-        <p>Queue size: {size}</p>
+        <p>
+          {name} size: {size}
+        </p>
       </div>
     </main>
   );

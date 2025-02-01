@@ -57,6 +57,7 @@ export function updateHealthyThreshold(size: number) {
 
 export function emitEmailStats() {
   const emailStats = emailQueues.map((queue) => ({
+    name: queue.queue.name,
     healthy: queue.stats.healthy,
     window: queue.stats.stats,
   }));
@@ -71,6 +72,7 @@ export function emitEmailStats() {
 
 export function emitSmsStats() {
   const smsStats = smsQueues.map((queue) => ({
+    name: queue.queue.name,
     healthy: queue.stats.healthy,
     window: queue.stats.stats,
   }));

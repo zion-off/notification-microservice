@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Provider } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Reorder } from "motion/react";
 import { socket } from "@/websocket";
@@ -27,14 +27,18 @@ type ProviderType = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const [emailStats, setEmailStats] = useState([{ healthy: true, window: [] }]);
+  const [emailStats, setEmailStats] = useState([
+    { name: "", healthy: true, window: [] },
+  ]);
   const [emailQueueSizes, setEmailQueueSizes] = useState([0, 0, 0]);
-  const [smsStats, setSmsStats] = useState([{ healthy: true, window: [] }]);
+  const [smsStats, setSmsStats] = useState([
+    { name: "", healthy: true, window: [] },
+  ]);
   const [smsQueueSizes, setSmsQueueSizes] = useState([0, 0, 0]);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [sendingSms, setSendingSms] = useState(false);
-  const [emailRate, setEmailRate] = useState(0);
-  const [smsRate, setSmsRate] = useState(0);
+  const [emailRate, setEmailRate] = useState(1);
+  const [smsRate, setSmsRate] = useState(1);
   const [unhealthyThreshold, setUnhealthyThreshold] = useState(0.7);
   const [emailResults, setEmailResults] = useState<
     { success: boolean; subject: string; body: string; recipients: string[] }[]
@@ -237,6 +241,7 @@ export default function Dashboard() {
                 {emailStats.map((provider, index) => (
                   <Chart
                     key={index}
+                    name={provider.name}
                     window={provider.window}
                     healthy={provider.healthy}
                     size={emailQueueSizes[index]}
@@ -279,11 +284,12 @@ export default function Dashboard() {
             <div className="flex flex-col gap-3">
               <p>Emails per minute</p>
               <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
+                <p>1</p>
                 <p>1000</p>
               </div>
               <Slider
                 defaultValue={[100]}
+                min={1}
                 max={1000}
                 step={1}
                 value={[emailRate]}
@@ -338,6 +344,7 @@ export default function Dashboard() {
                 {smsStats.map((provider, index) => (
                   <Chart
                     key={index}
+                    name={provider.name}
                     window={provider.window}
                     healthy={provider.healthy}
                     size={smsQueueSizes[index]}
@@ -377,11 +384,12 @@ export default function Dashboard() {
             <div className="flex flex-col gap-3 text-xs">
               <p>Texts per minute</p>
               <div className="flex w-full justify-between text-xxs font-mono">
-                <p>0</p>
+                <p>1</p>
                 <p>1000</p>
               </div>
               <Slider
                 defaultValue={[100]}
+                min={1}
                 max={1000}
                 step={1}
                 value={[smsRate]}
